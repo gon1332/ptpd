@@ -1,4 +1,6 @@
-set(PTPD2_SRCS
+set(STATISTICS_SOURCES dep/outlierfilter.c dep/statistics.c)
+
+add_executable(ptpd
         arith.c
         bmc.c
         dep/alarms.c
@@ -22,38 +24,34 @@ set(PTPD2_SRCS
         management.c
         signaling.c
         timingdomain.c
+        $<$<BOOL:${SNMP}>:dep/snmp.c>
+        $<$<BOOL:${STATISTICS}>:${STATISTICS_SOURCES}>
+        $<IF:$<BOOL:${POSIX_TIMERS}>,
+            dep/eventtimer_posix.c, # true
+            dep/eventtimer_itimer.c # false
+        >
 )
-
-add_executable(ptpd ${PTPD2_SRCS})
-
 target_include_directories(ptpd PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/def
         ${CMAKE_CURRENT_SOURCE_DIR}/dep
 )
-
-if (SNMP)
-    target_sources(ptpd PUBLIC dep/snmp.c)
-endif ()
-
-if (STATISTICS)
-    target_sources(ptpd PUBLIC
-            dep/statistics.c
-            dep/outlierfilter.c
-    )
-endif ()
-
-if (POSIX_TIMERS)
-    target_sources(ptpd PUBLIC dep/eventtimer_posix.c)
-else ()
-    target_sources(ptpd PUBLIC dep/eventtimer_itimer.c)
-endif ()
-
 target_compile_definitions(ptpd PUBLIC
         DATADIR="${CMAKE_CURRENT_SOURCE_DIR}"
-        $<$<BOOL:POSIX_TIMERS>:PTPD_PTIMERS>
+        PTPD_UNICAST_MAX=16 # Use the least number supported as we do not care about unicast
+        PTPD_DISABLE_SOTIMESTAMPING # Suggested to keep it disabled
+        $<$<BOOL:${POSIX_TIMERS}>:PTPD_PTIMERS>
+        $<$<BOOL:${SLAVE_ONLY}>:PTPD_SLAVE_ONLY>
+        $<$<BOOL:${SNMP}>:PTPD_SNMP>
+        $<$<BOOL:${STATISTICS}>:PTPD_STATISTICS>
 )
-
+target_compile_options(ptpd PUBLIC
+        -Wall
+)
 target_link_libraries(ptpd PUBLIC
         m
+        rt
+        $<$<BOOL:${SNMP}>:${NETSNMPLIBS}>
+        $<$<BOOL:${SNMP}>:${NETSNMPMIBS}>
+        $<$<BOOL:${SNMP}>:${NETSNMP}>
 )
