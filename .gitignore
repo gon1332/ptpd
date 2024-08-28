@@ -17,7 +17,7 @@ Makefile
 /missing
 /stamp-h1
 /build-aux/
-/config.h
+#/config.h
 /config.log
 /config.status
 /libtool
@@ -34,3 +34,6 @@ ptpd*.tar.gz
 /src/ptpd2
 /src/ptpd2.8
 /src/ptpd2.conf.5
+
+/cmake-build-*/
+/.idea
