@@ -41,6 +41,7 @@ target_compile_definitions(ptpd PUBLIC
         PTPD_UNICAST_MAX=16 # Use the least number supported as we do not care about unicast
         PTPD_DISABLE_SOTIMESTAMPING # Suggested to keep it disabled
         $<$<BOOL:${POSIX_TIMERS}>:PTPD_PTIMERS>
+        $<$<BOOL:${RUNTIME_DEBUG}>:RUNTIME_DEBUG>
         $<$<BOOL:${SLAVE_ONLY}>:PTPD_SLAVE_ONLY>
         $<$<BOOL:${SNMP}>:PTPD_SNMP>
         $<$<BOOL:${STATISTICS}>:PTPD_STATISTICS>

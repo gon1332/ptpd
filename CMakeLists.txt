@@ -3,6 +3,7 @@ project(ptpd C ASM)
 set(CMAKE_C_STANDARD 11)
 
 option(POSIX_TIMERS "Enable POSIX timers" ON)
+option(RUNTIME_DEBUG "Enable runtime debug information" ON)
 option(SLAVE_ONLY "Build a slave-only version incapable of running as a PTP master" OFF)
 option(SNMP "Enable SNMP (Not supported by Camlin)" OFF)
 option(STATISTICS "Enable statistics" OFF)

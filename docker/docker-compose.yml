@@ -1,0 +1,33 @@
+services:
+  ptpd-master:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ptpd-master
+    command: [ "--p2p", "-M", "-i", "eth0", "-V" ]
+    volumes:
+      - ../:/app
+    networks:
+      ptp-network:
+        ipv4_address: 172.28.0.2
+    cap_add:
+      - SYS_TIME
+
+  ptpd-slave:
+    build: .
+    container_name: ptpd-slave
+    command: [ "--p2p", "-s", "-i", "eth0", "-V" ]
+    volumes:
+      - ../:/app
+    networks:
+      ptp-network:
+        ipv4_address: 172.28.0.3
+    cap_add:
+      - SYS_TIME
+
+networks:
+  ptp-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
