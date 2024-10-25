@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2015-2024 Ioannis Konstantelias,
  * Copyright (c) 2012-2015 Wojciech Owczarek,
  * Copyright (c) 2011-2012 George V. Neville-Neil,
  *                         Steven Kreuzer,
@@ -1053,9 +1054,9 @@ writeStatusFile(PtpClock *ptpClock,const RunTimeOpts *rtOpts, Boolean quiet)
 	    memset(tmpBuf, 0, sizeof(tmpBuf));
 	    snprint_PortIdentity(tmpBuf, sizeof(tmpBuf),
 	    &ptpClock->parentDS.parentPortIdentity);
-	fprintf(out, 		STATUSPREFIX"  %s","Best master ID", tmpBuf);
-	if(ptpClock->portDS.portState == PTP_MASTER)
-	    fprintf(out," (self)");
+	    fprintf(out, 		STATUSPREFIX"  %s","Best master ID", tmpBuf);
+	    if(ptpClock->portDS.portState == PTP_MASTER)
+	        fprintf(out," (self)");
 	    fprintf(out,"\n");
 	}
 	if(rtOpts->transport == UDP_IPV4 &&
@@ -2212,7 +2213,7 @@ restoreDrift(PtpClock * ptpClock, const RunTimeOpts * rtOpts, Boolean quiet)
 				INFO("Observed drift loaded from %s: "DRIFTFORMAT" ppb\n",
 					rtOpts->driftFile,
 					recovered_drift);
-				break;
+			break;
 			}
 
 		case DRIFT_KERNEL:
