@@ -1,0 +1,88 @@
+name: "Build"
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build on Ubuntu
+        run: |
+          autoreconf -vfi
+          ./configure
+          make
+
+  openbsd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build on OpenBSD, x86-64, 7.4
+        uses: cross-platform-actions/action@v0.25.0
+        env:
+          AUTOCONF_VERSION: 2.71
+          AUTOMAKE_VERSION: 1.16
+        with:
+          operating_system: openbsd
+          architecture: x86-64
+          version: '7.4'
+          memory: 4G
+          sync_files: runner-to-vm
+          environment_variables: AUTOCONF_VERSION AUTOMAKE_VERSION
+          shell: bash
+          run: |
+            sudo pkg_add autoconf-$AUTOCONF_VERSION automake-$AUTOMAKE_VERSION.5 libtool
+            autoreconf -vfi
+            ./configure
+            make
+
+  freebsd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build on FreeBSD
+        uses: cross-platform-actions/action@v0.25.0
+        with:
+          operating_system: freebsd
+          architecture: x86-64
+          version: '14.0'
+          memory: 4G
+          sync_files: runner-to-vm
+          shell: bash
+          run: |
+            sudo pkg install -y autoconf automake libtool
+            autoreconf -vfi
+            ./configure
+            make
+
+  netbsd:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build on NetBSD
+        uses: cross-platform-actions/action@v0.25.0
+        with:
+          operating_system: netbsd
+          architecture: x86-64
+          version: '9.4'
+          memory: 4G
+          sync_files: runner-to-vm
+          shell: bash
+          run: |
+            sudo pkgin install autoconf automake libtool
+            autoreconf -vfi
+            ./configure
+            make
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build on macOS
+        run: |
+          brew install autoconf automake libtool
+          autoreconf -vfi
+          ./configure
+          make
