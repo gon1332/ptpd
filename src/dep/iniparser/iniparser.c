@@ -638,7 +638,7 @@ dictionary * iniparser_load(const char * ininame)
     char line    [ASCIILINESZ+1] ;
     char section [ASCIILINESZ+1] ;
     char key     [ASCIILINESZ+1] ;
-    char tmp     [ASCIILINESZ+1] ;
+    char tmp     [(ASCIILINESZ * 2) + 2] ;
     char val     [ASCIILINESZ+1] ;
 
     int  last=0 ;
@@ -663,7 +663,6 @@ dictionary * iniparser_load(const char * ininame)
     memset(section, 0, ASCIILINESZ);
     memset(key,     0, ASCIILINESZ);
     memset(val,     0, ASCIILINESZ);
-    memset(tmp,     0, ASCIILINESZ);
     last=0 ;
 
     while (fgets(line+last, ASCIILINESZ-last, in)!=NULL) {
@@ -705,7 +704,7 @@ dictionary * iniparser_load(const char * ininame)
             break ;
 
             case LINE_VALUE:
-            snprintf(tmp, ASCIILINESZ, "%s%s%s", section, strlen(section)==0?"":":", key);
+            sprintf(tmp, "%s%s%s", section, strlen(section)==0?"":":", key);
             errs = dictionary_set(dict, tmp, val) ;
             break ;
 
