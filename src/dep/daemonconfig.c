@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2015-2024 Ioannis Konstantelias,
  * Copyright (c) 2013-2015 Wojciech Owczarek,
  *
  * All Rights Reserved
@@ -854,6 +855,8 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	 * is complete and free of any unknown options. In the end, warning
 	 * is issued for unknown options. On any errors, NULL is returned
 	 */
+
+	int ret;
 
 	dictionary* target = dictionary_new(0);
 
@@ -2447,21 +2450,32 @@ parseConfig ( int opCode, void *opArg, dictionary* dict, RunTimeOpts *rtOpts )
 	 */
 	if(rtOpts->autoLockFile) {
 
-	    memset(rtOpts->lockFile, 0, PATH_MAX);
-	    snprintf(rtOpts->lockFile, PATH_MAX,
-		    "%s/"PTPD_PROGNAME"_%s_%s.lock",
-		    rtOpts->lockDirectory,
-		    (rtOpts->clockQuality.clockClass<128 && !rtOpts->slaveOnly) ? "master" : DEFAULT_CLOCKDRIVER,
-		    rtOpts->ifaceName);
-	    DBG("Automatic lock file name is: %s\n", rtOpts->lockFile);
+		memset(rtOpts->lockFile, 0, PATH_MAX);
+		ret = snprintf(rtOpts->lockFile, PATH_MAX,
+				"%s/"PTPD_PROGNAME"_%s_%s.lock",
+				rtOpts->lockDirectory,
+				(rtOpts->clockQuality.clockClass<128 && !rtOpts->slaveOnly) ? "master" : DEFAULT_CLOCKDRIVER,
+				rtOpts->ifaceName);
+		if (ret < 0) {
+			ERROR("The lock file name failed to be written\n", rtOpts->lockFile);
+		} else if (ret > PATH_MAX) {
+			WARNING("The lock file name has been truncated\n", rtOpts->lockFile);
+		}
+		DBG("Automatic lock file name is: %s\n", rtOpts->lockFile);
 	/*
 	 * Otherwise use default lock file name, with the specified lock directory
 	 * which will be set do default from constants_dep.h if not configured
 	 */
 	} else {
-		if(!CONFIG_ISSET("global:lock_file"))
-			snprintf(rtOpts->lockFile, PATH_MAX,
-				"%s/%s", rtOpts->lockDirectory, DEFAULT_LOCKFILE_NAME);
+		if(!CONFIG_ISSET("global:lock_file")) {
+			ret = snprintf(rtOpts->lockFile, PATH_MAX,
+					"%s/%s", rtOpts->lockDirectory, DEFAULT_LOCKFILE_NAME);
+			if (ret < 0) {
+				ERROR("The lock file name failed to be written\n", rtOpts->lockFile);
+			} else if (ret > PATH_MAX) {
+				WARNING("The lock file name has been truncated\n", rtOpts->lockFile);
+			}
+		}
 	}
 
 /* ==== END additional logic */
@@ -2522,7 +2536,7 @@ loadCommandLineKeys(dictionary* dict, int argc,char** argv)
 {
 
     int i;
-    char key[PATH_MAX],val[PATH_MAX];
+    char key[PATH_MAX],val[PATH_MAX+1];
 
     for ( i=0; i<argc; i++) {
 

@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2015-2024 Ioannis Konstantelias,
  * Copyright (c) 2012-2015 Wojciech Owczarek,
  * Copyright (c) 2011-2012 George V. Neville-Neil,
  *                         Steven Kreuzer,
@@ -677,10 +678,10 @@ bmcStateDecision(ForeignMasterRecord *foreign, const RunTimeOpts *rtOpts, PtpClo
 			ptpClock->counters.bestMasterChanges++;
 			if (ptpClock->portDS.portState == PTP_SLAVE)
 				displayStatus(ptpClock, "State: ");
-				if(rtOpts->calibrationDelay) {
-					ptpClock->isCalibrated = FALSE;
-					timerStart(&ptpClock->timers[CALIBRATION_DELAY_TIMER], rtOpts->calibrationDelay);
-				}
+			if(rtOpts->calibrationDelay) {
+				ptpClock->isCalibrated = FALSE;
+				timerStart(&ptpClock->timers[CALIBRATION_DELAY_TIMER], rtOpts->calibrationDelay);
+			}
 		}
                 if(rtOpts->unicastNegotiation && ptpClock->parentGrants != NULL) {
                         ptpClock->portDS.logAnnounceInterval = ptpClock->parentGrants->grantData[ANNOUNCE_INDEXED].logInterval;

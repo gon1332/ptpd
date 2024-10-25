@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2015-2024 Ioannis Konstantelias,
  * Copyright (c) 2014-2015 Wojciech Owczarek,
  *                         George V. Neville-Neil
  * Copyright (c) 2012-2013 George V. Neville-Neil,
@@ -1069,7 +1070,7 @@ netInit(NetPath * netPath, RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	if( !netPath->interfaceInfo.hasHwAddress && netPath->interfaceInfo.hasAfAddress ) {
 		uint32_t addr = ((struct sockaddr_in*)&(netPath->interfaceInfo.afAddress))->sin_addr.s_addr;
 		memcpy(netPath->interfaceID, &addr, 2);
-		memcpy(netPath->interfaceID + 4, &addr + 2, 2);
+		memcpy(netPath->interfaceID + 4, (Octet *)&addr + 2, 2);
 	/* Initialise interfaceID with hardware address */
 	} else {
 		    memcpy(&netPath->interfaceID, &netPath->interfaceInfo.hwAddress,
@@ -2017,7 +2018,7 @@ netSendEvent(Octet * buf, UInteger16 length, NetPath * netPath,
 
 ssize_t
 netSendGeneral(Octet * buf, UInteger16 length, NetPath * netPath,
-	       const const RunTimeOpts *rtOpts, Integer32 destinationAddress)
+	       const RunTimeOpts *rtOpts, Integer32 destinationAddress)
 {
 	ssize_t ret;
 	struct sockaddr_in addr;
