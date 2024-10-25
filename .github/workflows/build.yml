@@ -71,7 +71,7 @@ jobs:
           sync_files: runner-to-vm
           shell: bash
           run: |
-            sudo pkgin install autoconf automake libtool
+            sudo pkgin -y install autoconf automake libtool
             autoreconf -vfi
             ./configure
             make
