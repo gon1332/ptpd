@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2015-2024 Ioannis Konstantelias
  * Copyright (c) 2015 	   Wojciech Owczarek
  * Copyright (c) 2014 	   Perseus Telecom
  *
@@ -56,7 +57,7 @@ static void handleSMAcknowledgeCancelUnicastTransmission(MsgSignaling* incoming,
 static Boolean prepareSMRequestUnicastTransmission(MsgSignaling* outgoing, UnicastGrantData *grant, PtpClock* ptpClock);
 static Boolean prepareSMCancelUnicastTransmission(MsgSignaling* outgoing, UnicastGrantData* grant, PtpClock* ptpClock);
 static void requestUnicastTransmission(UnicastGrantData *grant, UInteger32 duration, const RunTimeOpts* rtOpts, PtpClock* ptpClock);
-static void issueSignaling(MsgSignaling *outgoing, Integer32 destination, const const RunTimeOpts *rtOpts, PtpClock *ptpclock);
+static void issueSignaling(MsgSignaling *outgoing, Integer32 destination, const RunTimeOpts *rtOpts, PtpClock *ptpclock);
 static void cancelNodeGrants(UnicastGrantTable *nodeTable, const RunTimeOpts *rtOpts, PtpClock *ptpClock);
 
 /* Return unicast grant array index for given message type */
@@ -959,7 +960,7 @@ requestUnicastTransmission(UnicastGrantData *grant, UInteger32 duration, const R
 }
 
 void
-cancelUnicastTransmission(UnicastGrantData* grant, const const RunTimeOpts* rtOpts, PtpClock* ptpClock)
+cancelUnicastTransmission(UnicastGrantData* grant, const RunTimeOpts* rtOpts, PtpClock* ptpClock)
 {
 
 /* todo: dbg sending */
@@ -979,7 +980,7 @@ cancelUnicastTransmission(UnicastGrantData* grant, const const RunTimeOpts* rtOp
 }
 
 static void
-issueSignaling(MsgSignaling *outgoing, Integer32 destination, const const RunTimeOpts *rtOpts,
+issueSignaling(MsgSignaling *outgoing, Integer32 destination, const RunTimeOpts *rtOpts,
 		PtpClock *ptpClock)
 {
 
