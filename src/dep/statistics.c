@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2015-2024 Ioannis Konstantelias,
  * Copyright (c) 2013-2015 Wojciech Owczarek
  *
  * All Rights Reserved
@@ -590,7 +591,7 @@ IntMovingStatFilter* createIntMovingStatFilter(StatFilterOptions *config, const 
 
 	if(config->windowSize < 2) container->windowType = WINDOW_SLIDING;
 
-	strncpy(container->identifier, id, 10);
+	strncpy(container->identifier, id, 9);
 
 	return container;
 
@@ -749,7 +750,7 @@ DoubleMovingStatFilter* createDoubleMovingStatFilter(StatFilterOptions *config, 
 
 	if(config->windowSize < 2) container->windowType = WINDOW_SLIDING;
 
-	strncpy(container->identifier, id, 10);
+	strncpy(container->identifier, id, 9);
 
 	return container;
 

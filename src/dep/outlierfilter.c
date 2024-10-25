@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2014-2024 Ioannis Konstantelias,
  * Copyright (c) 2014      Wojciech Owczarek,
  *
  * All Rights Reserved
@@ -82,7 +83,7 @@ outlierFilterInit(OutlierFilter *filter, OutlierFilterConfig *config, const char
 	 if (config->enabled) {
                 filter->rawStats = createDoubleMovingStdDev(config->capacity);
                 strncpy(filter->id, id, OUTLIERFILTER_MAX_DESC);
-                strncpy(filter->rawStats->identifier, id, 10);
+                strncpy(filter->rawStats->identifier, id, 9);
                 filter->filteredStats = createDoubleMovingMean(config->capacity);
                 filter->threshold = config->threshold;
         } else {

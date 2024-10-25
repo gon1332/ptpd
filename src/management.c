@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2015-2024 Ioannis Konstantelias,
  * Copyright (c) 2012-2015 Wojciech Owczarek,
  * Copyright (c) 2011-2012 George V. Neville-Neil,
  *                         Steven Kreuzer,
@@ -603,7 +604,7 @@ void handleMMClockDescription(MsgManagement* incoming, MsgManagement* outgoing, 
 		/* reserved */
 		data->reserved = 0;
 		/* product description */
-		tmpsnprintf(tmpStr, 64, PRODUCT_DESCRIPTION, rtOpts->productDescription);
+		tmpsnprintf(tmpStr, 80, PRODUCT_DESCRIPTION, rtOpts->productDescription);
                 data->productDescription.lengthField = strlen(tmpStr);
                 XMALLOC(data->productDescription.textField,
                                         data->productDescription.lengthField);
@@ -1211,7 +1212,7 @@ void handleMMLogAnnounceInterval(MsgManagement* incoming, MsgManagement* outgoin
 		data = (MMLogAnnounceInterval*)incoming->tlv->dataField;
 		/* SET actions */
 		ptpClock->portDS.logAnnounceInterval = data->logAnnounceInterval;
-		tmpsnprintf(tmpStr, 4, "%d", data->logAnnounceInterval);
+		tmpsnprintf(tmpStr, 6, "%d", data->logAnnounceInterval);
 		setConfig(ptpClock->managementConfig, "ptpengine:log_announce_interval", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
@@ -1299,7 +1300,7 @@ void handleMMLogSyncInterval(MsgManagement* incoming, MsgManagement* outgoing, P
 		data = (MMLogSyncInterval*)incoming->tlv->dataField;
 		/* SET actions */
 		ptpClock->portDS.logSyncInterval = data->logSyncInterval;
-		tmpsnprintf(tmpStr, 4, "%d", data->logSyncInterval);
+		tmpsnprintf(tmpStr, 6, "%d", data->logSyncInterval);
 		setConfig(ptpClock->managementConfig, "ptpengine:log_sync_interval", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */
@@ -1764,7 +1765,7 @@ void handleMMLogMinPdelayReqInterval(MsgManagement* incoming, MsgManagement* out
 		data = (MMLogMinPdelayReqInterval*)incoming->tlv->dataField;
 		/* SET actions */
 		ptpClock->portDS.logMinPdelayReqInterval = data->logMinPdelayReqInterval;
-		tmpsnprintf(tmpStr, 4, "%d", data->logMinPdelayReqInterval);
+		tmpsnprintf(tmpStr, 6, "%d", data->logMinPdelayReqInterval);
 		setConfig(ptpClock->managementConfig, "ptpengine:log_peer_delayreq_interval", tmpStr);
 		ptpClock->record_update = TRUE;
 		/* intentionally fall through to GET case */

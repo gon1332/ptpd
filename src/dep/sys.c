@@ -282,7 +282,7 @@ int ether_ntohost_cache(char *hostname, struct ether_addr *addr)
 	}
 
 	valid = 1;
-	strncpy(hostname, buf, 100);
+	memcpy(hostname, buf, 100);
 	return 0;
 }
 
@@ -293,7 +293,7 @@ snprint_ClockIdentity_ntohost(char *s, int max_len, const ClockIdentity id)
 {
 	int len = 0;
 	int i,j;
-	char  buf[100];
+	char  buf[101];
 	struct ether_addr e;
 
 	/* extract mac address */
@@ -310,6 +310,7 @@ snprint_ClockIdentity_ntohost(char *s, int max_len, const ClockIdentity id)
 	}
 
 	/* convert and print hostname */
+	memset(buf, 0, 101);
 	ether_ntohost_cache(buf, &e);
 	len += snprintf(&s[len], max_len - len, "(%s)", buf);
 
@@ -576,6 +577,7 @@ closeLog(LogFileHandler* handler)
 Boolean
 maintainLogSize(LogFileHandler* handler)
 {
+	int len;
 
 	if(handler->maxSize) {
 		if(handler->logFP == NULL)
@@ -593,11 +595,17 @@ maintainLogSize(LogFileHandler* handler)
 			int logFileNumber = 0;
 			time_t maxMtime = 0;
 			struct stat st;
-			char fname[PATH_MAX];
+			char fname[PATH_MAX + 1];
 			/* Find the last modified file of the series */
 			while(++i <= handler->maxFiles) {
 				memset(fname, 0, PATH_MAX);
-				snprintf(fname, PATH_MAX,"%s.%d", handler->logPath, i);
+				len = snprintf(fname, PATH_MAX,"%s.%d", handler->logPath, i);
+				if (len < 0) {
+					ERROR("Log file name failed to be written\n");
+					break;
+				} else if (len > PATH_MAX) {
+					WARNING("Log file name has been truncated\n");
+				}
 				if((stat(fname,&st) != -1) && S_ISREG(st.st_mode)) {
 					if(st.st_mtime > maxMtime) {
 						maxMtime = st.st_mtime;
@@ -609,7 +617,12 @@ maintainLogSize(LogFileHandler* handler)
 			if(++logFileNumber > handler->maxFiles)
 				logFileNumber = 1;
 			memset(fname, 0, PATH_MAX);
-			snprintf(fname, PATH_MAX,"%s.%d", handler->logPath, logFileNumber);
+			len = snprintf(fname, PATH_MAX,"%s.%d", handler->logPath, logFileNumber);
+			if (len < 0) {
+				ERROR("Log file name failed to be written\n");
+			} else if (len > PATH_MAX) {
+				WARNING("Log file name has been truncated\n");
+			}
 			/* Move current file to new location */
 			rename(handler->logPath, fname);
 			/* Reopen to reactivate the original path */
@@ -1741,6 +1754,7 @@ int lockPid = 0;
 glob_t matchedFiles;
 Boolean ret = TRUE;
 int matches = 0, counter = 0;
+int len;
 
 	/* no need to check locks */
 	if(rtOpts->ignore_daemon_lock ||
@@ -1754,8 +1768,13 @@ int matches = 0, counter = 0;
      */
 
 	/* Check for other ptpd running on the same interface - same for all modes */
-	snprintf(searchPattern, PATH_MAX,"%s/%s_*_%s.lock",
-	    rtOpts->lockDirectory, PTPD_PROGNAME,rtOpts->ifaceName);
+	len = snprintf(searchPattern, PATH_MAX,"%s/%s_*_%s.lock",
+			rtOpts->lockDirectory, PTPD_PROGNAME,rtOpts->ifaceName);
+	if (len < 0) {
+		ERROR("Search pattern failed to be written\n");
+	} else if (len > PATH_MAX) {
+		WARNING("Search pattern has been truncated\n");
+	}
 
 	DBGV("SearchPattern: %s\n",searchPattern);
 	switch(glob(searchPattern, 0, NULL, &matchedFiles)) {
@@ -1800,8 +1819,13 @@ int matches = 0, counter = 0;
 		globfree(&matchedFiles);
 	/* Any mode that can control the clock - also check the clock driver */
 	if(rtOpts->clockQuality.clockClass > 127 ) {
-	    snprintf(searchPattern, PATH_MAX,"%s/%s_%s_*.lock",
-	    rtOpts->lockDirectory,PTPD_PROGNAME,DEFAULT_CLOCKDRIVER);
+		len = snprintf(searchPattern, PATH_MAX,"%s/%s_%s_*.lock",
+				rtOpts->lockDirectory,PTPD_PROGNAME,DEFAULT_CLOCKDRIVER);
+		if (len < 0) {
+			ERROR("Search pattern failed to be written\n");
+		} else if (len > PATH_MAX) {
+			WARNING("Search pattern has been truncated\n");
+		}
 	DBGV("SearchPattern: %s\n",searchPattern);
 
 	switch(glob(searchPattern, 0, NULL, &matchedFiles)) {
