@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 2015-2024 Ioannis Konstantelias,
  * Copyright (c) 2012-2015 Wojciech Owczarek,
  * Copyright (c) 2011-2012 George V. Neville-Neil,
  *                         Steven Kreuzer,
@@ -1035,7 +1036,7 @@ updateClock(const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 }
 
 void
-setupPIservo(PIservo* servo, const const RunTimeOpts* rtOpts)
+setupPIservo(PIservo* servo, const RunTimeOpts* rtOpts)
 {
     servo->maxOutput = rtOpts->servoMaxPpb;
     servo->kP = rtOpts->servoKP;
