@@ -1,0 +1,66 @@
+# clang-format configuration inspired by Zephyr and Linux
+---
+AccessModifierOffset: -4
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+AlignConsecutiveMacros: AcrossComments
+AlignEscapedNewlines: Left
+AlignOperands: Align
+AlignTrailingComments: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AlwaysBreakAfterReturnType: AllDefinitions # Based on current PTPd style
+AlwaysBreakBeforeMultilineStrings: false
+BasedOnStyle: LLVM
+BreakBeforeBraces: Linux
+BinPackArguments: true
+BinPackParameters: true
+BitFieldColonSpacing: After
+ColumnLimit: 100
+ContinuationIndentWidth: 8
+IncludeCategories:
+  - Regex: '^".*\.h"$'
+    Priority: 0
+  - Regex: '^<(assert|complex|ctype|errno|fenv|float|inttypes|limits|locale|math|setjmp|signal|stdarg|stdbool|stddef|stdint|stdio|stdlib|string|tgmath|time|wchar|wctype)\.h>$'
+    Priority: 1
+  - Regex: '^\".*ptpd.*\.h\"$'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 3
+IncludeIsMainRegex: "(_test)?$"
+IndentCaseLabels: false
+IndentGotoLabels: false
+IndentWidth: 8
+
+# Taken from git's rules
+PenaltyBreakAssignment: 10
+PenaltyBreakBeforeFirstCallParameter: 30
+PenaltyBreakComment: 10
+PenaltyBreakFirstLessLess: 0
+PenaltyBreakString: 10
+PenaltyExcessCharacter: 100
+PenaltyReturnTypeOnItsOwnLine: 60
+
+PointerAlignment: Right
+SortIncludes: Never
+SpaceAfterCStyleCast: false
+SpaceAfterTemplateKeyword: true
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeParens: ControlStatementsExceptControlMacros
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: false
+SpacesInContainerLiterals: false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+TabWidth: 8 # Based on current PTPd style
+UseTab: Always # Based on current PTPd style
