@@ -1,0 +1,16 @@
+name: Compliance
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  compliance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt install clang-format
+      - name: Check Formatting Style (clang-format)
+        run: |
+          sh ./scripts/check_format.sh ${{ github.event.pull_request.base.ref }}
