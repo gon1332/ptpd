@@ -1,3 +1,12 @@
+/*-
+ * Copyright (c) 2015-2024 Ioannis Konstantelias,
+ * Copyright (c) 2013-2015 Wojciech Owczarek,
+ *
+ * All Rights Reserved
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 /**
  * @file   daemonconfig.h
  *

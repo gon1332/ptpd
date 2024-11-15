@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) 2024      Ioannis Konstantelias
+ *
+ * All Rights Reserved
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
