@@ -1,5 +1,11 @@
-
-/* constants_dep.h */
+/**
+ * Copyright (c) 2024      Ioannis Konstantelias
+ * Copyright (c) 2013-2015 Wojciech Owczarek
+ *
+ * All Rights Reserved
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
 
 #ifndef CONSTANTS_DEP_H
 #define CONSTANTS_DEP_H

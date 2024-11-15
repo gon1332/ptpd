@@ -1,3 +1,12 @@
+/*-
+ * Copyright (c) 2024 Ioannis Konstantelias,
+ * Copyright (c) 2014 Wojciech Owczarek,
+ *
+ * All Rights Reserved
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 /**
  * @file   ptpd_dep.h
  *
