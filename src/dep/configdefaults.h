@@ -1,4 +1,12 @@
 /**
+ * Copyright (c) 2024      Ioannis Konstantelias
+ * Copyright (c) 2013-2015 Wojciech Owczarek
+ *
+ * All Rights Reserved
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+/**
  * @file   configdefaults.h
  *
  * @brief  definitions related to config templates and defaults
