@@ -26,6 +26,8 @@
 #ifndef PTP_PRIMITIVES_H_
 #define PTP_PRIMITIVES_H_
 
+#include <stdint.h>
+
 
 typedef enum {FALSE=0, TRUE} Boolean;
 typedef char Octet;

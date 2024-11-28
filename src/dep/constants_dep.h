@@ -108,7 +108,6 @@ if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.ne
 #   define PTPD_MSBF
 # endif
 
-#define CLOCK_IDENTITY_LENGTH 8
 #define ADJ_FREQ_MAX 500000
 
 /* UDP/IPv4 dependent */
@@ -119,7 +118,6 @@ if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.ne
 #define SUBDOMAIN_ADDRESS_LENGTH  4
 #define PORT_ADDRESS_LENGTH       2
 #define PTP_UUID_LENGTH           6
-#define CLOCK_IDENTITY_LENGTH	  8
 #define FLAG_FIELD_LENGTH         2
 
 #define PACKET_SIZE  300
