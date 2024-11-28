@@ -26,6 +26,7 @@
 #ifndef PTP_DATATYPES_H_
 #define PTP_DATATYPES_H_
 
+#include "ptp_constants.h"
 #include "ptp_primitives.h"
 
 /*Struct defined in spec*/
@@ -41,6 +42,7 @@
 
 /**
 * \brief Time structure to handle timestamps
+* If the time is negative, both fields should be negative.
  */
 typedef struct {
 	Integer32 seconds;
@@ -49,6 +51,8 @@ typedef struct {
 
 /**
 * \brief The TimeInterval type represents time intervals
+* \note According to the specification, TimeInterval represents fractional nanoseconds.
+*       However, the current implementation does not account for them.
  */
 typedef struct {
 	/* see src/def/README for a note on this X-macro */

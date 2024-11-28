@@ -1,4 +1,4 @@
-name: Test
+name: System Test
 
 on:
   push: {}
@@ -19,4 +19,3 @@ jobs:
       - name: Execute tests in the running services
         run: |
           ./scripts/wait_for.sh 'docker logs ptpd-slave 2>&1 | grep -q "(slv) Received Peer Delay Interval"' 120
-

@@ -1,0 +1,23 @@
+name: Unit Test
+
+on:
+  push: {}
+  pull_request: {}
+
+jobs:
+  unit_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: "true"
+
+      - name: Install dependencies
+        run: sudo apt install cmake ninja-build
+
+      - name: Build and run unit tests
+        run: |
+          cmake --preset ut
+          cmake --build --preset ut cmake-build-ut
+          ctest --preset ut
