@@ -2,7 +2,7 @@
 
 commit=$1
 
-cmd="git diff -U0 --no-color $commit | clang-format-diff -p1"
+cmd="git diff -U0 --no-color $commit -- '*.c' '*.h' | clang-format-diff -p1"
 diff=$(eval "$cmd")
 if [ $? -ne 0 ]
 then
