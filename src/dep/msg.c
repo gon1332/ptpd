@@ -91,6 +91,7 @@ PACK_ENDIAN( Integer16, 16 )
 PACK_ENDIAN( UInteger16, 16 )
 PACK_ENDIAN( Integer32, 32 )
 PACK_ENDIAN( UInteger32, 32 )
+PACK_ENDIAN(Integer64, 64)
 
 PACK_LOWER_AND_UPPER( Enumeration4 )
 PACK_LOWER_AND_UPPER( UInteger4 )
@@ -152,20 +153,6 @@ packUInteger48( void *i, void *buf)
 {
 	packUInteger16(&((UInteger48*)i)->msb, buf);
 	packUInteger32(&((UInteger48*)i)->lsb, buf + 2);
-}
-
-void
-unpackInteger64( void *buf, void *i, PtpClock *ptpClock)
-{
-	unpackInteger32(buf, &((Integer64*)i)->msb, ptpClock);
-	unpackUInteger32(buf + 4, &((Integer64*)i)->lsb, ptpClock);
-}
-
-void
-packInteger64( void* i, void *buf )
-{
-	packInteger32(&((Integer64*)i)->msb, buf);
-	packUInteger32(&((Integer64*)i)->lsb, buf + 4);
 }
 
 /* NOTE: the unpack functions for management messages can probably be refactored into a macro */
@@ -1655,10 +1642,8 @@ msgUnpackHeader(Octet * buf, MsgHeader * header)
 	header->domainNumber = (*(UInteger8 *) (buf + 4));
 	header->flagField0 = (*(Octet *) (buf + 6));
 	header->flagField1 = (*(Octet *) (buf + 7));
-	memcpy(&header->correctionField.msb, (buf + 8), 4);
-	memcpy(&header->correctionField.lsb, (buf + 12), 4);
-	header->correctionField.msb = flip32(header->correctionField.msb);
-	header->correctionField.lsb = flip32(header->correctionField.lsb);
+	memcpy(&header->correctionField, (buf + 8), 8);
+	header->correctionField = flip64(header->correctionField);
 	copyClockIdentity(header->sourcePortIdentity.clockIdentity, (buf + 20));
 	header->sourcePortIdentity.portNumber =
 		flip16(*(UInteger16 *) (buf + 28));
@@ -1945,8 +1930,7 @@ msgPackDelayResp(Octet * buf, MsgHeader * header, Timestamp * receiveTimestamp, 
 	memset((buf + 8), 0, 8);
 
 	/* Copy correctionField of PdelayReqMessage */
-	*(Integer32 *) (buf + 8) = flip32(header->correctionField.msb);
-	*(Integer32 *) (buf + 12) = flip32(header->correctionField.lsb);
+	*(Integer64 *)(buf + 8) = flip64(header->correctionField);
 
 	*(UInteger16 *) (buf + 30) = flip16(header->sequenceId);
 
@@ -2100,8 +2084,7 @@ msgPackPdelayRespFollowUp(Octet * buf, MsgHeader * header, Timestamp * responseO
 	/* Table 24 */
 
 	/* Copy correctionField of PdelayReqMessage */
-	*(Integer32 *) (buf + 8) = flip32(header->correctionField.msb);
-	*(Integer32 *) (buf + 12) = flip32(header->correctionField.lsb);
+	*(Integer64 *)(buf + 8) = flip64(header->correctionField);
 
 	/* Pdelay_resp_follow_up message */
 	*(UInteger16 *) (buf + 34) =

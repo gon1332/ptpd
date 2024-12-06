@@ -318,9 +318,9 @@ updateAlarms(AlarmEntry *alarms, int count)
 		    alarm->state = ALARM_UNSET;
 		    /* inform, run handlers */
 		    dispatchAlarm(alarm);
-		    clearTime(&alarm->timeSet);
-		    clearTime(&alarm->timeCleared);
-		/* condition is false and alarm was set - clear and wait for age out */
+		    ti_clear(&alarm->timeSet);
+		    ti_clear(&alarm->timeCleared);
+		    /* condition is false and alarm was set - clear and wait for age out */
 		} else if (alarm->state == ALARM_SET) {
 		    alarm->state = ALARM_CLEARED;
 		}

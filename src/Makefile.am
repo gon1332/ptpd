@@ -65,6 +65,8 @@ ptpd2_SOURCES =				\
 	dep/alarms.c			\
 	ptpd.c				\
 	ptpd.h				\
+	time_ops.h          \
+	time_ops.c          \
 	$(NULL)
 
 # SNMP

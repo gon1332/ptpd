@@ -1404,12 +1404,11 @@ netSelect(TimeInternal * timeout, NetPath * netPath, fd_set *readfds)
 #endif
 
 	if (timeout) {
-		if(isTimeInternalNegative(timeout)) {
+		if (ti_is_negative(timeout)) {
 			ERROR("Negative timeout attempted for select()\n");
 			return -1;
 		}
-		tv.tv_sec = timeout->seconds;
-		tv.tv_usec = timeout->nanoseconds / 1000;
+		InternalTime_to_tv(timeout, &tv);
 		tv_ptr = &tv;
 	} else {
 		tv_ptr = NULL;
@@ -1617,33 +1616,31 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 				if(cmsg->cmsg_type == SO_TIMESTAMPING ||
 				    cmsg->cmsg_type == SO_TIMESTAMPNS) {
 					ts = (struct timespec *)CMSG_DATA(cmsg);
-					time->seconds = ts->tv_sec;
-					time->nanoseconds = ts->tv_nsec;
+					ts_to_InternalTime(ts, time);
 					timestampValid = TRUE;
-					DBG("rcvevent: SO_TIMESTAMP%s %s time stamp: %us %dns\n", netPath->txTimestampFailure ?
-					    "NS" : "ING",
-					    (flags & MSG_ERRQUEUE) ? "(TX)" : "(RX)" , time->seconds, time->nanoseconds);
+					DBG("rcvevent: SO_TIMESTAMP%s %s time stamp: %lfs\n",
+					    netPath->txTimestampFailure ? "NS" : "ING",
+					    (flags & MSG_ERRQUEUE) ? "(TX)" : "(RX)",
+					    timeInternalToDouble(time));
 					break;
 				}
 #elif defined(SO_TIMESTAMPNS)
 				if(cmsg->cmsg_type == SCM_TIMESTAMPNS) {
 					ts = (struct timespec *)CMSG_DATA(cmsg);
-					time->seconds = ts->tv_sec;
-					time->nanoseconds = ts->tv_nsec;
+					ts_to_InternalTime(ts, time);
 					timestampValid = TRUE;
-					DBGV("kernel NANO recv time stamp %us %dns\n",
-					     time->seconds, time->nanoseconds);
+					DBGV("kernel NANO recv time stamp %lfs\n",
+					     timeInternalToDouble(time));
 					break;
 				}
 #elif defined(SO_BINTIME)
 				if(cmsg->cmsg_type == SCM_BINTIME) {
 					bt = (struct bintime *)CMSG_DATA(cmsg);
 					bintime2timespec(bt, &ts);
-					time->seconds = ts.tv_sec;
-					time->nanoseconds = ts.tv_nsec;
+					ts_to_InternalTime(&ts, time);
 					timestampValid = TRUE;
-					DBGV("kernel NANO recv time stamp %us %dns\n",
-					     time->seconds, time->nanoseconds);
+					DBGV("kernel NANO recv time stamp %lfs\n",
+					     timeInternalToDouble(time));
 					break;
 				}
 #endif
@@ -1651,11 +1648,10 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 #if defined(SO_TIMESTAMP)
 				if(cmsg->cmsg_type == SCM_TIMESTAMP) {
 					tv = (struct timeval *)CMSG_DATA(cmsg);
-					time->seconds = tv->tv_sec;
-					time->nanoseconds = tv->tv_usec * 1000;
+					tv_to_InternalTime(tv, time);
 					timestampValid = TRUE;
-					DBGV("kernel MICRO recv time stamp %us %dns\n",
-					     time->seconds, time->nanoseconds);
+					DBGV("kernel MICRO recv time stamp %lfs\n", ,
+					     timeInternalToDouble(time));
 				}
 #endif
 			 }
@@ -1717,11 +1713,11 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 		/* XXX Total cheat */
 		memcpy(buf, pkt_data + netPath->headerOffset,
 		       pkt_header->caplen - netPath->headerOffset);
-		time->seconds = pkt_header->ts.tv_sec;
-		time->nanoseconds = pkt_header->ts.tv_usec * 1000;
+		time->nanoseconds =
+			pkt_header->ts.tv_sec * 1000000000 + pkt_header->ts.tv_usec * 1000;
 		timestampValid = TRUE;
-		DBGV("netRecvEvent: kernel PCAP recv time stamp %us %dns\n",
-		     time->seconds, time->nanoseconds);
+		DBGV("netRecvEvent: kernel PCAP recv time stamp %lfs\n",
+		     timeInternalToDouble(time));
 		fflush(NULL);
 		ret = pkt_header->caplen - netPath->headerOffset;
 	}
@@ -1934,7 +1930,7 @@ netSendEvent(Octet * buf, UInteger16 length, NetPath * netPath,
 				if(!getTxTimestamp(netPath, tim)) {
 					netPath->txTimestampFailure = TRUE;
 					if (tim) {
-						clearTime(tim);
+						ti_clear(tim);
 					}
 				}
 			}
@@ -1978,7 +1974,7 @@ netSendEvent(Octet * buf, UInteger16 length, NetPath * netPath,
 #endif /* PTPD_PCAP */
 				if(!getTxTimestamp(netPath, tim)) {
 					if (tim) {
-						clearTime(tim);
+						ti_clear(tim);
 					}
 					
 					netPath->txTimestampFailure = TRUE;
@@ -2192,7 +2188,7 @@ netSendPeerEvent(Octet * buf, UInteger16 length, NetPath * netPath, const RunTim
 			if(!getTxTimestamp(netPath, tim)) {
 				netPath->txTimestampFailure = TRUE;
 				if (tim) {
-					clearTime(tim);
+					ti_clear(tim);
 				}
 			}
 		}
@@ -2227,7 +2223,7 @@ netSendPeerEvent(Octet * buf, UInteger16 length, NetPath * netPath, const RunTim
 		if(!netPath->txTimestampFailure) {
 			if(!getTxTimestamp(netPath, tim)) {
 				if (tim) {
-					clearTime(tim);
+					ti_clear(tim);
 				}
 					
 				netPath->txTimestampFailure = TRUE;

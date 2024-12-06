@@ -28,6 +28,7 @@
 
 #include <stdint.h>
 
+#define NEW_TIME_IMPLEMENTATION
 
 typedef enum {FALSE=0, TRUE} Boolean;
 typedef char Octet;
@@ -60,9 +61,13 @@ typedef struct {
 /**
 * \brief Implementation specific of Integer64 type
  */
+#ifdef NEW_TIME_IMPLEMENTATION
+typedef int64_t Integer64;
+#else
 typedef struct {
 	uint32_t lsb;
 	int32_t msb;
 } Integer64;
+#endif
 
 #endif /*PTP_PRIMITIVES_H_*/

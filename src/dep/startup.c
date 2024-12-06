@@ -665,7 +665,7 @@ ptpdStartup(int argc, char **argv, Integer16 * ret, RunTimeOpts * rtOpts)
 
 	/* get some entropy in... */
 	getTime(&tmpTime);
-	srand(tmpTime.seconds ^ tmpTime.nanoseconds);
+	srand(ti_seconds(&tmpTime) ^ tmpTime.nanoseconds);
 
 	/**
 	 * If a required setting, such as interface name, or a setting

@@ -150,17 +150,15 @@ findSyncDestination(TimeInternal *timeStamp, const RunTimeOpts *rtOpts, PtpClock
     for(i = 0; i < UNICAST_MAX_DESTINATIONS; i++) {
 
 	if(rtOpts->unicastNegotiation) {
-		if( (timeStamp->seconds == ptpClock->unicastGrants[i].lastSyncTimestamp.seconds) &&
-		    (timeStamp->nanoseconds == ptpClock->unicastGrants[i].lastSyncTimestamp.nanoseconds)) {
-			clearTime(&ptpClock->unicastGrants[i].lastSyncTimestamp);
+		if (ti_cmp(timeStamp, &ptpClock->unicastGrants[i].lastSyncTimestamp) == 0) {
+			ti_clear(&ptpClock->unicastGrants[i].lastSyncTimestamp);
 			return ptpClock->unicastGrants[i].transportAddress;
-		    }
+		}
 	} else {
-		if( (timeStamp->seconds == ptpClock->unicastDestinations[i].lastSyncTimestamp.seconds) &&
-		    (timeStamp->nanoseconds == ptpClock->unicastDestinations[i].lastSyncTimestamp.nanoseconds)) {
-			clearTime(&ptpClock->unicastDestinations[i].lastSyncTimestamp);
+		if (ti_cmp(timeStamp, &ptpClock->unicastDestinations[i].lastSyncTimestamp) == 0) {
+			ti_clear(&ptpClock->unicastDestinations[i].lastSyncTimestamp);
 			return ptpClock->unicastDestinations[i].transportAddress;
-		    }
+		}
 	}
     }
 
@@ -636,13 +634,13 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		}
 
 		// FIXME: clear these vars inside initclock
-		clearTime(&ptpClock->delay_req_send_time);
-		clearTime(&ptpClock->delay_req_receive_time);
-		clearTime(&ptpClock->pdelay_req_send_time);
-		clearTime(&ptpClock->pdelay_req_receive_time);
-		clearTime(&ptpClock->pdelay_resp_send_time);
-		clearTime(&ptpClock->pdelay_resp_receive_time);
-		
+		ti_clear(&ptpClock->delay_req_send_time);
+		ti_clear(&ptpClock->delay_req_receive_time);
+		ti_clear(&ptpClock->pdelay_req_send_time);
+		ti_clear(&ptpClock->pdelay_req_receive_time);
+		ti_clear(&ptpClock->pdelay_resp_send_time);
+		ti_clear(&ptpClock->pdelay_resp_receive_time);
+
 		timerStart(&ptpClock->timers[OPERATOR_MESSAGES_TIMER],
 			   OPERATOR_MESSAGES_INTERVAL);
 		
@@ -1195,7 +1193,7 @@ static void
 timestampCorrection(const RunTimeOpts * rtOpts, PtpClock *ptpClock, TimeInternal *timeStamp)
 {
 
-	TimeInternal fudge = {0,0};
+	TimeInternal fudge = {0};
 	if(rtOpts->leapSecondHandling == LEAP_SMEAR && (ptpClock->leapSecondPending)) {
 	DBG("Leap second smear: correction %.09f ns, seconds to midnight %f, leap smear period %d\n", ptpClock->leapSmearFudge,
 		secondsToMidnight(), rtOpts->leapSecondSmearPeriod);
@@ -1238,7 +1236,7 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
      */
     DBGV("__UTC_offset: %d %d \n", ptpClock->timePropertiesDS.currentUtcOffsetValid, ptpClock->timePropertiesDS.currentUtcOffset);
     if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
-	timeStamp->seconds += ptpClock->timePropertiesDS.currentUtcOffset;
+	    ti_inc(timeStamp, ptpClock->timePropertiesDS.currentUtcOffset, INC_SECONDS);
     }
 
     ptpClock->message_activity = TRUE;
@@ -1355,8 +1353,8 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
      * subtract the inbound latency adjustment if it is not a loop
      *  back and the time stamp seems reasonable
      */
-    if (!isFromSelf && timeStamp->seconds > 0)
-	subTime(timeStamp, timeStamp, &rtOpts->inboundLatency);
+    if (!isFromSelf && ti_seconds(timeStamp) > 0)
+	    subTime(timeStamp, timeStamp, &rtOpts->inboundLatency);
 
     DBG("      ==> %s message received, sequence %d\n", getMessageTypeName(ptpClock->msgTmpHeader.messageType),
 							ptpClock->msgTmpHeader.sequenceId);
@@ -1430,7 +1428,7 @@ handle(RunTimeOpts *rtOpts, PtpClock *ptpClock)
     int ret;
     ssize_t length = -1;
 
-    TimeInternal timeStamp = { 0, 0 };
+    TimeInternal timeStamp = {0};
     fd_set readfds;
 
     FD_ZERO(&readfds);
@@ -1884,25 +1882,20 @@ handleSync(const MsgHeader *header, ssize_t length,
 					    ptpClock->followUpGap);
 				}
 
-				ptpClock->sync_receive_time.seconds = tint->seconds;
-				ptpClock->sync_receive_time.nanoseconds = tint->nanoseconds;
+				ptpClock->sync_receive_time = *tint;
 
 				ptpClock->waitingForFollow = TRUE;
 				/*Save correctionField of Sync message*/
 				integer64_to_internalTime(
 					header->correctionField,
 					&correctionField);
-				ptpClock->lastSyncCorrectionField.seconds =
-					correctionField.seconds;
-				ptpClock->lastSyncCorrectionField.nanoseconds =
-					correctionField.nanoseconds;
+				ptpClock->lastSyncCorrectionField = correctionField;
 				ptpClock->recvSyncSequenceId =
 					header->sequenceId;
 				break;
 			} else {
 
-				ptpClock->sync_receive_time.seconds = tint->seconds;
-				ptpClock->sync_receive_time.nanoseconds = tint->nanoseconds;
+				ptpClock->sync_receive_time = *tint;
 
 				ptpClock->recvSyncSequenceId =
 					header->sequenceId;
@@ -2221,8 +2214,7 @@ processDelayReqFromSelf(const TimeInternal * tint, const RunTimeOpts * rtOpts, P
 
 	ptpClock->waitingForDelayResp = TRUE;
 
-	ptpClock->delay_req_send_time.seconds = tint->seconds;
-	ptpClock->delay_req_send_time.nanoseconds = tint->nanoseconds;
+	ptpClock->delay_req_send_time = *tint;
 
 	/*Add latency*/
 	addTime(&ptpClock->delay_req_send_time,
@@ -2316,10 +2308,7 @@ handleDelayResp(const MsgHeader *header, ssize_t length,
 
 				toInternalTime(&requestReceiptTimestamp,
 					       &ptpClock->msgTmp.resp.receiveTimestamp);
-				ptpClock->delay_req_receive_time.seconds =
-					requestReceiptTimestamp.seconds;
-				ptpClock->delay_req_receive_time.nanoseconds =
-					requestReceiptTimestamp.nanoseconds;
+				ptpClock->delay_req_receive_time = requestReceiptTimestamp;
 
 				integer64_to_internalTime(
 					header->correctionField,
@@ -2485,9 +2474,8 @@ processPdelayReqFromSelf(const TimeInternal * tint, const RunTimeOpts * rtOpts, 
 	 * Get sending timestamp from IP stack
 	 * with SO_TIMESTAMP
 	 */
-	ptpClock->pdelay_req_send_time.seconds = tint->seconds;
-	ptpClock->pdelay_req_send_time.nanoseconds = tint->nanoseconds;
-			
+	ptpClock->pdelay_req_send_time = *tint;
+
 	/*Add latency*/
 	addTime(&ptpClock->pdelay_req_send_time,
 		&ptpClock->pdelay_req_send_time,
@@ -2557,25 +2545,23 @@ handlePdelayResp(const MsgHeader *header, TimeInternal *tint,
                                 /* Two Step Clock */
 				if ((header->flagField0 & PTP_TWO_STEP) == PTP_TWO_STEP) {
 					/*Store t4 (Fig 35)*/
-					ptpClock->pdelay_resp_receive_time.seconds = tint->seconds;
-					ptpClock->pdelay_resp_receive_time.nanoseconds = tint->nanoseconds;
+					ptpClock->pdelay_resp_receive_time = *tint;
 					/*store t2 (Fig 35)*/
 					toInternalTime(&requestReceiptTimestamp,
 						       &ptpClock->msgTmp.presp.requestReceiptTimestamp);
-					ptpClock->pdelay_req_receive_time.seconds = requestReceiptTimestamp.seconds;
-					ptpClock->pdelay_req_receive_time.nanoseconds = requestReceiptTimestamp.nanoseconds;
-					
+					ptpClock->pdelay_req_receive_time = requestReceiptTimestamp;
+
 					integer64_to_internalTime(header->correctionField,&correctionField);
-					ptpClock->lastPdelayRespCorrectionField.seconds = correctionField.seconds;
-					ptpClock->lastPdelayRespCorrectionField.nanoseconds = correctionField.nanoseconds;
+					ptpClock->lastPdelayRespCorrectionField = correctionField;
 				} else {
 				/* One step Clock */
 					/*Store t4 (Fig 35)*/
-					ptpClock->pdelay_resp_receive_time.seconds = tint->seconds;
-					ptpClock->pdelay_resp_receive_time.nanoseconds = tint->nanoseconds;
-					
-					integer64_to_internalTime(header->correctionField,&correctionField);
-					updatePeerDelay (&ptpClock->mpd_filt,rtOpts,ptpClock,&correctionField,FALSE);
+				ptpClock->pdelay_resp_receive_time = *tint;
+
+				integer64_to_internalTime(header->correctionField,
+							  &correctionField);
+				updatePeerDelay(&ptpClock->mpd_filt, rtOpts, ptpClock,
+						&correctionField, FALSE);
 				if (rtOpts->ignore_delayreq_interval_master == 0) {
 					DBGV("current pdelay_req: %d  new pdelay req: %d \n",
 						ptpClock->portDS.logMinPdelayReqInterval,
@@ -2704,10 +2690,7 @@ handlePdelayRespFollowUp(const MsgHeader *header, ssize_t length,
 				toInternalTime(
 					&responseOriginTimestamp,
 					&ptpClock->msgTmp.prespfollow.responseOriginTimestamp);
-				ptpClock->pdelay_resp_send_time.seconds =
-					responseOriginTimestamp.seconds;
-				ptpClock->pdelay_resp_send_time.nanoseconds =
-					responseOriginTimestamp.nanoseconds;
+				ptpClock->pdelay_resp_send_time = responseOriginTimestamp;
 				integer64_to_internalTime(
 					ptpClock->msgTmpHeader.correctionField,
 					&correctionField);
@@ -2919,8 +2902,8 @@ issueSync(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 	} else {
 	    for(i = 0; i < UNICAST_MAX_DESTINATIONS; i++) {
 		ptpClock->syncDestIndex[i].transportAddress = 0;
-		clearTime(&ptpClock->unicastGrants[i].lastSyncTimestamp);
-		clearTime(&ptpClock->unicastDestinations[i].lastSyncTimestamp);
+		ti_clear(&ptpClock->unicastGrants[i].lastSyncTimestamp);
+		ti_clear(&ptpClock->unicastDestinations[i].lastSyncTimestamp);
 	    }
 	    /* send to granted only */
 	    if(rtOpts->unicastNegotiation) {
@@ -2968,7 +2951,7 @@ issueSyncSingle(Integer32 dst, UInteger16 *sequenceId, const RunTimeOpts *rtOpts
 	getTime(&internalTime);
 
 	if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
-		internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
+		ti_inc(&internalTime, ptpClock->timePropertiesDS.currentUtcOffset, INC_SECONDS);
 	}
 
 	/*
@@ -2986,7 +2969,7 @@ issueSyncSingle(Integer32 dst, UInteger16 *sequenceId, const RunTimeOpts *rtOpts
 
 	if(ptpClock->leapSecondInProgress) {
 		DBG("Leap second in progress - will not send SYNC\n");
-		clearTime(&internalTime);
+		ti_clear(&internalTime);
 		return internalTime;
 	}
 
@@ -3012,30 +2995,34 @@ issueSyncSingle(Integer32 dst, UInteger16 *sequenceId, const RunTimeOpts *rtOpts
 #else
 		if(!ptpClock->netPath.txTimestampFailure) {
 #endif /* PTPD_PCAP */
-			if(internalTime.seconds && internalTime.nanoseconds) {
+			if (internalTime.nanoseconds) {
 
-			    if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
-				    internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
-			    }
-			    processSyncFromSelf(&internalTime, rtOpts, ptpClock, dst, *sequenceId);
+				if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
+					ti_inc(&internalTime,
+					       ptpClock->timePropertiesDS.currentUtcOffset,
+					       INC_SECONDS);
+				}
+				processSyncFromSelf(&internalTime, rtOpts, ptpClock, dst,
+						    *sequenceId);
 			}
 		}
 #endif
 
 #if defined(__QNXNTO__) && defined(PTPD_EXPERIMENTAL)
-	if(internalTime.seconds && internalTime.nanoseconds) {
-	    if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
-		    internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
-	    }
-		    processSyncFromSelf(&internalTime, rtOpts, ptpClock, dst, *sequenceId);
-	}
+		if (!ti_is_zero(&internalTime)) {
+			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
+				ti_inc(&internalTime, ptpClock->timePropertiesDS.currentUtcOffset,
+				       INC_SECONDS);
+			}
+			processSyncFromSelf(&internalTime, rtOpts, ptpClock, dst, *sequenceId);
+		}
 #endif
 
 
 		ptpClock->lastSyncDst = dst;
 
-		if(!internalTime.seconds && !internalTime.nanoseconds) {
-		    internalTime = now;
+		if (ti_is_zero(&internalTime)) {
+			internalTime = now;
 		}
 
 		/* index the Sync destination */
@@ -3096,7 +3083,7 @@ issueDelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 	 */
 	getTime(&internalTime);
 	if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
-		internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
+		ti_inc(&internalTime, ptpClock->timePropertiesDS.currentUtcOffset, INC_SECONDS);
 	}
 	fromInternalTime(&internalTime,&originTimestamp);
 
@@ -3128,9 +3115,10 @@ issueDelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 		if(!ptpClock->netPath.txTimestampFailure) {
 #endif /* PTPD_PCAP */
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
-				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
-			}			
-			
+				ti_inc(&internalTime, ptpClock->timePropertiesDS.currentUtcOffset,
+				       INC_SECONDS);
+			}
+
 			processDelayReqFromSelf(&internalTime, rtOpts, ptpClock);
 		}
 #endif
@@ -3180,7 +3168,7 @@ issuePdelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 
 	getTime(&internalTime);
 	if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
-		internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
+		ti_inc(&internalTime, ptpClock->timePropertiesDS.currentUtcOffset, INC_SECONDS);
 	}
 	fromInternalTime(&internalTime,&originTimestamp);
 
@@ -3205,8 +3193,9 @@ issuePdelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 		if(!ptpClock->netPath.txTimestampFailure) {
 #endif /* PTPD_PCAP */
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
-				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
-			}			
+				ti_inc(&internalTime, ptpClock->timePropertiesDS.currentUtcOffset,
+				       INC_SECONDS);
+			}
 			processPdelayReqFromSelf(&internalTime, rtOpts, ptpClock);
 		}
 #endif
@@ -3259,8 +3248,9 @@ issuePdelayResp(const TimeInternal *tint,MsgHeader *header, Integer32 sourceAddr
 		if(!ptpClock->netPath.txTimestampFailure) {
 #endif /* PTPD_PCAP */
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
-				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
-			}			
+				ti_inc(&internalTime, ptpClock->timePropertiesDS.currentUtcOffset,
+				       INC_SECONDS);
+			}
 			processPdelayRespFromSelf(&internalTime, rtOpts, ptpClock, dst, header->sequenceId);
 		}
 #endif

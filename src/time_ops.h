@@ -1,5 +1,8 @@
 /**
- * Copyright (c) 2015-2024 Ioannis Konstantelias,
+ * @file time_ops.h
+ * Defines operations and conversion functions for the time-keeping structures.
+ *
+ * Copyright (c) 2024 Ioannis Konstantelias
  *
  * All Rights Reserved
  *
@@ -13,80 +16,148 @@
 #include <sys/time.h> /* for struct timeval */
 #include "ptp_datatypes.h" /* for TimeInternal */
 
+#define USEC_IN_SEC  1000000LL
+#define NSEC_IN_SEC  1000000000LL
+#define NSEC_IN_USEC 1000LL
+
+/** Type of increment passed in ti_inc(). */
+enum increment_type {
+	INC_SECONDS,
+	INC_NANOSECONDS
+};
+
 /** Converts TimeInternal to TimeInterval
- * @note TimeInternal does not represent fractional nanoseconds.
- * @param[in] from Time in seconds and nanoseconds
+ * @note TimeInternal does not represent fractional nanoseconds
+ * @param[in] from Internal time representation
  * @param[out] to Time in scaled nanoseconds according to 5.3.2
  */
 void internalTime_to_integer64(TimeInternal from, Integer64 *to);
 
 /** Converts TimeInterval to TimeInternal
- * @note TimeInternal does not represent fractional nanoseconds.
+ * @note TimeInternal does not represent fractional nanoseconds
  * @param[in] from Time in scaled nanoseconds according to 5.3.2
- * @param[out] to Time in seconds and nanoseconds
+ * @param[out] to Internal time representation
  */
 void integer64_to_internalTime(Integer64 from, TimeInternal *to);
 
 /** Converts TimeInterval to Timestamp
- * @param[in] from Time in seconds and nanoseconds
+ * @param[in] from Internal time representation
  * @param[out] to Time according to 5.3.3
  */
 void fromInternalTime(const TimeInternal *from, Timestamp *to);
 
 /** Converts Timestamp to TimeInterval
- * @param[out] to Time in seconds and nanoseconds
+ * @param[out] to Internal time representation
  * @param[in] from Time according to 5.3.3
  */
 void toInternalTime(TimeInternal *to, const Timestamp *from);
 
+/** Converts struct timespec to TimeInternal
+ * @param[in] from Time in struct timespec
+ * @param[out] to Internal time representation
+ */
+void ts_to_InternalTime(const struct timespec *from, TimeInternal *to);
+
+/** Converts struct timespec to TimeInternal
+ * @param[in] from Internal time representation
+ * @param[out] to Time in struct timespec
+ */
+void InternalTime_to_ts(const TimeInternal *from, struct timespec *to);
+
+/** Converts struct timeval to TimeInternal
+ * @param[in] from Time in struct timeval
+ * @param[out] to Internal time representation
+ */
+void tv_to_InternalTime(const struct timeval *from, TimeInternal *to);
+
+/** Converts struct timeval to TimeInternal
+ * @param[in] from Internal time representation
+ * @param[out] to Time in struct timeval
+ */
+void InternalTime_to_tv(const TimeInternal *from, struct timeval *to);
+
+/**
+ *
+ */
+void addTime(TimeInternal *out, const TimeInternal *x, const TimeInternal *y);
+
+/**
+ *
+ */
+void subTime(TimeInternal *out, const TimeInternal *x, const TimeInternal *y);
+
+/** Divides the time given by 2
+ * @note It's an in-place function
+ * @param[inout] t Time to divide
+ */
+void ti_div2(TimeInternal *t);
+
+/** Clears the time given
+ * @param[out] t Time to set to zero
+ */
+void ti_clear(TimeInternal *t);
+
+/**
+ * @param[in] t Time to test
+ * @returns 1 if time is negative, otherwise 0
+ */
+int ti_is_negative(const TimeInternal *t);
+
+/**
+ * @param[in] t Time to test
+ * @returns 1 if time is zero, otherwise 0
+ */
+int ti_is_zero(const TimeInternal *t);
+
+/** Compares two TimeInternal values
+ * @param[in] x First time to compare
+ * @param[in] y Second time to compare
+ * @retval 0 if equal
+ * @retval positive if x greater than y
+ * @retval negative if x less than y
+ */
+int ti_cmp(const TimeInternal *x, const TimeInternal *y);
+
+/** Applies an increment to a TimeInternal
+ * @param[inout] t The time to be incremented
+ * @param inc The increment (can be positive or negative)
+ * @param type Interpretation of the increment, see enum increment_type
+ */
+void ti_inc(TimeInternal *t, int32_t inc, enum increment_type type);
+
+/** Removes sign from variable
+ * @param[inout] t The time to be sign neutral
+ */
+void ti_abs(TimeInternal *t);
+
+/** Checks how close two times are in nanoseconds
+ * @param[in] x First time to compare
+ * @param[in] y Second time to compare
+ * @param error_ns The accepted error in nanoseconds
+ * @returns 1 if the difference of x and y is less/equal than/to error_ns, otherwise 0
+ */
+int ti_is_close(const TimeInternal *x, const TimeInternal *y, int error_ns);
+
+//// NOT UNIT TESTED YET -----v
+
+int check_timestamp_is_fresh2(const TimeInternal *timeA, const TimeInternal *timeB);
+
+double timeInternalToDouble(const TimeInternal *p);
+
+TimeInternal doubleToTimeInternal(double d);
+
+/**
+ * @param[in] The time to test
+ * @returns the amount of seconds contained in t
+ */
+int32_t ti_seconds(const TimeInternal *t);
+
 #if 0
-void ts_to_InternalTime(const struct timespec *a,  TimeInternal * b);
-void tv_to_InternalTime(const struct timeval *a,  TimeInternal * b);
-void normalizeTime(TimeInternal * r);
-void addTime(TimeInternal * r, const TimeInternal * x, const TimeInternal * y);
-void subTime(TimeInternal * r, const TimeInternal * x, const TimeInternal * y);
-
-/// Divide an internal time value
-///
-/// @param r the time to convert
-/// @param divisor
-///
-
-#if 0
-/* TODO: this function could be simplified, as currently it is only called to halve the time */
-void divTime(TimeInternal *r, int divisor);
-#endif
-
-void div2Time(TimeInternal *r);
-
-/* clear an internal time value */
-void clearTime(TimeInternal *r);
-
-/* sets a time value to a certain nanoseconds */
-void nano_to_Time(TimeInternal *x, int nano);
-
-/* greater than operation */
-int gtTime(const TimeInternal *x, const TimeInternal *y);
-
-/* remove sign from variable */
-void absTime(TimeInternal *r);
-
-/* if 2 time values are close enough for X nanoseconds */
-int is_Time_close(const TimeInternal *x, const TimeInternal *y, int nanos);
-
-int check_timestamp_is_fresh2(const TimeInternal * timeA, const TimeInternal * timeB);
-
 int check_timestamp_is_fresh(const TimeInternal * timeA);
-
-int isTimeInternalNegative(const TimeInternal * p);
 
 double secondsToMidnight(void);
 
 double getPauseAfterMidnight(Integer8 announceInterval, int pausePeriod);
-
-double timeInternalToDouble(const TimeInternal * p);
-
-TimeInternal doubleToTimeInternal(const double d);
 
 /* FNV-1 hash, 32-bit, optional modulo limiter */
 uint32_t fnvHash(void *input, size_t len, int modulo);
