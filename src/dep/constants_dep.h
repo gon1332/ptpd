@@ -117,7 +117,7 @@ if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.ne
 
 #define SUBDOMAIN_ADDRESS_LENGTH  4
 #define PORT_ADDRESS_LENGTH       2
-#define PTP_UUID_LENGTH           6
+#define PTP_UUID_LENGTH		  6
 #define FLAG_FIELD_LENGTH         2
 
 #define PACKET_SIZE  300

@@ -254,8 +254,8 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock) {
 		ptpClock->clockStatus.leapInsert = FALSE;
 		ptpClock->clockStatus.leapDelete = FALSE;
 
-		if( now.seconds >= rtOpts->leapInfo.startTime &&
-		    now.seconds < rtOpts->leapInfo.endTime) {
+		if (ti_seconds(&now) >= rtOpts->leapInfo.startTime &&
+		    ti_seconds(&now) < rtOpts->leapInfo.endTime) {
 			DBG("Leap second pending - leap file\n");
 			if(rtOpts->leapInfo.leapType == 1) {
 			    ptpClock->clockStatus.leapInsert = TRUE;
@@ -263,26 +263,21 @@ prepareLeapFlags(RunTimeOpts *rtOpts, PtpClock *ptpClock) {
 			if(rtOpts->leapInfo.leapType == -1) {
 			    ptpClock->clockStatus.leapDelete = TRUE;
 			}
-			
+
 			ptpClock->clockStatus.override = TRUE;
-
 		}
-		 if(now.seconds >= rtOpts->leapInfo.endTime) {
-		    ptpClock->clockStatus.utcOffset =
-			    rtOpts->leapInfo.nextOffset;
-		    	    ptpClock->clockStatus.override = TRUE;
-		    if(strcmp(rtOpts->leapFile,"")) {
-			memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
-			parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
+		if (ti_seconds(&now) >= rtOpts->leapInfo.endTime) {
+			ptpClock->clockStatus.utcOffset = rtOpts->leapInfo.nextOffset;
+			ptpClock->clockStatus.override = TRUE;
+			if (strcmp(rtOpts->leapFile, "")) {
+				memset(&rtOpts->leapInfo, 0, sizeof(LeapSecondInfo));
+				parseLeapFile(rtOpts->leapFile, &rtOpts->leapInfo);
 
-			if(rtOpts->leapInfo.offsetValid) {
-				ptpClock->clockStatus.utcOffset =
-				rtOpts->leapInfo.currentOffset;
-
+				if (rtOpts->leapInfo.offsetValid) {
+					ptpClock->clockStatus.utcOffset =
+						rtOpts->leapInfo.currentOffset;
+				}
 			}
-
-		    }
-
 		}
 	    /* otherwise we try using the kernel info, but not when we're slave */
 	    } else if(ptpClock->portDS.portState != PTP_SLAVE) {
@@ -482,7 +477,7 @@ ptpServiceClockUpdate (TimingService* service)
 #endif /* HAVE_SYS_TIMEX_H */
 
 	getTime(&oldTime);
-	subTime(&newTime, &oldTime, &ptpClock->currentDS.offsetFromMaster);
+	ti_sub(&newTime, &oldTime, &ptpClock->currentDS.offsetFromMaster);
 
 	/* Major time change */
 	if(clockStatus->majorChange){
@@ -499,8 +494,8 @@ ptpServiceClockUpdate (TimingService* service)
 	    }
 #endif /* HAVE_LINUX_RTC_H */
 	    /* need to inform utmp / wtmp */
-	    if(oldTime.seconds != newTime.seconds) {
-		updateXtmp(oldTime, newTime);
+	    if (ti_seconds(&oldTime) != ti_seconds(&newTime)) {
+		    updateXtmp(oldTime, newTime);
 	    }
 	}
 

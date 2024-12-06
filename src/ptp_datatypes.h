@@ -41,18 +41,17 @@
  */
 
 /**
-* \brief Time structure to handle timestamps
-* If the time is negative, both fields should be negative.
+ * \brief Time structure to handle timestamps
+ * If the time is negative, both fields should be negative.
  */
 typedef struct {
-	Integer32 seconds;
-	Integer32 nanoseconds;
+	int64_t nanoseconds;
 } TimeInternal;
 
 /**
-* \brief The TimeInterval type represents time intervals
-* \note According to the specification, TimeInterval represents fractional nanoseconds.
-*       However, the current implementation does not account for them.
+ * \brief The TimeInterval type represents time intervals
+ * \note According to the specification, TimeInterval represents fractional nanoseconds.
+ *       However, the current implementation does not account for them.
  */
 typedef struct {
 	/* see src/def/README for a note on this X-macro */

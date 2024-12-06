@@ -262,8 +262,7 @@ initOutgoingMsgSignaling(PortIdentity* targetPortIdentity, MsgSignaling* outgoin
         /* set header flagField to zero for management messages, Spec 13.3.2.6 */
         outgoing->header.flagField0 = 0x00;
         outgoing->header.flagField1 = 0x00;
-        outgoing->header.correctionField.msb = 0;
-        outgoing->header.correctionField.lsb = 0;
+	outgoing->header.correctionField = 0;
 	copyPortIdentity(&outgoing->header.sourcePortIdentity, &ptpClock->portDS.portIdentity);
 
 	outgoing->header.sequenceId = ptpClock->sentSignalingSequenceId++;

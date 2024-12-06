@@ -14,4 +14,4 @@ jobs:
         run: sudo apt install clang-format
       - name: Check Formatting Style (clang-format)
         run: |
-          sh ./scripts/check_format.sh origin/${{ github.base_ref }}
+          python3 ./scripts/check_format.py origin/${{ github.base_ref }}

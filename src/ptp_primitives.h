@@ -28,7 +28,6 @@
 
 #include <stdint.h>
 
-
 typedef enum {FALSE=0, TRUE} Boolean;
 typedef char Octet;
 typedef int8_t Integer8;
@@ -60,9 +59,6 @@ typedef struct {
 /**
 * \brief Implementation specific of Integer64 type
  */
-typedef struct {
-	uint32_t lsb;
-	int32_t msb;
-} Integer64;
+typedef int64_t Integer64;
 
 #endif /*PTP_PRIMITIVES_H_*/

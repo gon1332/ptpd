@@ -125,7 +125,7 @@ void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	ptpClock->portDS.logMinDelayReqInterval = rtOpts->initial_delayreq;
 
-	clearTime(&ptpClock->portDS.peerMeanPathDelay);
+	ti_clear(&ptpClock->portDS.peerMeanPathDelay);
 
 	ptpClock->portDS.logAnnounceInterval = rtOpts->logAnnounceInterval;
 	ptpClock->portDS.announceReceiptTimeout = rtOpts->announceReceiptTimeout;
@@ -212,9 +212,9 @@ void m1(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
 	/*Current data set update*/
 	ptpClock->currentDS.stepsRemoved = 0;
-	
-	clearTime(&ptpClock->currentDS.offsetFromMaster);
-	clearTime(&ptpClock->currentDS.meanPathDelay);
+
+	ti_clear(&ptpClock->currentDS.offsetFromMaster);
+	ti_clear(&ptpClock->currentDS.meanPathDelay);
 
 	copyClockIdentity(ptpClock->parentDS.parentPortIdentity.clockIdentity,
 	       ptpClock->defaultDS.clockIdentity);

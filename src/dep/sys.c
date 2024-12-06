@@ -34,6 +34,7 @@
  */
 
 #include "../ptpd.h"
+#include <inttypes.h>
 
 #ifdef HAVE_NETINET_ETHER_H
 #  include <netinet/ether.h>
@@ -111,7 +112,7 @@ char *dump_TimeInternal2(const char *st1, const TimeInternal * p1, const char *s
 
 	/* display difference */
 	TimeInternal r;
-	subTime(&r, p1, p2);
+	ti_sub(&r, p1, p2);
 	n += snprintf(buf + n, BUF_SIZE - n, "   (diff: ");
 	n += snprint_TimeInternal(buf + n, BUF_SIZE - n, &r);
 	n += snprintf(buf + n, BUF_SIZE - n, ") ");
@@ -127,11 +128,9 @@ snprint_TimeInternal(char *s, int max_len, const TimeInternal * p)
 	int len = 0;
 
 	/* always print either a space, or the leading "-". This makes the stat files columns-aligned */
-	len += snprintf(&s[len], max_len - len, "%c",
-		isTimeInternalNegative(p)? '-':' ');
+	len += snprintf(&s[len], max_len - len, "%c", ti_is_negative(p) ? '-' : ' ');
 
-	len += snprintf(&s[len], max_len - len, "%d.%09d",
-	    abs(p->seconds), abs(p->nanoseconds));
+	len += snprintf(&s[len], max_len - len, "%lf", fabs(ti_to_double(p)));
 
 	return len;
 }
@@ -707,25 +706,29 @@ logStatistics(PtpClock * ptpClock)
 			
 		switch(ptpClock->char_last_msg) {
 			case 'S':
-			if((now.seconds - prev_now_sync.seconds) < rtOpts.statisticsLogInterval){
-				DBGV("Suppressed Sync statistics log entry - statisticsLogInterval configured\n");
-				return;
-			}
+				if ((ti_seconds(&now) - ti_seconds(&prev_now_sync)) <
+				    rtOpts.statisticsLogInterval) {
+					DBGV("Suppressed Sync statistics log entry - "
+					     "statisticsLogInterval configured\n");
+					return;
+				}
 			prev_now_sync = now;
 			    break;
 			case 'D':
 			case 'P':
-			if((now.seconds - prev_now_delay.seconds) < rtOpts.statisticsLogInterval){
-				DBGV("Suppressed Sync statistics log entry - statisticsLogInterval configured\n");
-				return;
-			}
+				if ((ti_seconds(&now) - ti_seconds(&prev_now_delay)) <
+				    rtOpts.statisticsLogInterval) {
+					DBGV("Suppressed Sync statistics log entry - "
+					     "statisticsLogInterval configured\n");
+					return;
+				}
 			prev_now_delay = now;
 			default:
 			    break;
 		}
 	}
 
-	time_s = now.seconds;
+	time_s = ti_seconds(&now);
 
 	/* output date-time timestamp if configured */
 	if (rtOpts.statisticsTimestamp == TIMESTAMP_DATETIME ||
@@ -739,9 +742,9 @@ logStatistics(PtpClock * ptpClock)
 	/* output unix timestamp s.ns if configured */
 	if (rtOpts.statisticsTimestamp == TIMESTAMP_UNIX ||
 	    rtOpts.statisticsTimestamp == TIMESTAMP_BOTH) {
-	    len += snprintf(sbuf + len, sizeof(sbuf) - len, "%d.%06d, %s,",
-		       now.seconds, now.nanoseconds, /* Timestamp */
-		       translatePortState(ptpClock)); /* State */
+		len += snprintf(sbuf + len, sizeof(sbuf) - len, "%lf, %s,",
+				ti_to_double(&now), /* Timestamp */
+				translatePortState(ptpClock)); /* State */
 	}
 
 	if (ptpClock->portDS.portState == PTP_SLAVE) {
@@ -1380,9 +1383,7 @@ recordSync(UInteger16 sequenceId, TimeInternal * time)
 {
 	extern RunTimeOpts rtOpts;
 	if (rtOpts.recordLog.logEnabled && rtOpts.recordLog.logFP != NULL) {
-		fprintf(rtOpts.recordLog.logFP, "%d %llu\n", sequenceId,
-		  ((time->seconds * 1000000000ULL) + time->nanoseconds)
-		);
+		fprintf(rtOpts.recordLog.logFP, "%d %" PRId64 "\n", sequenceId, time->nanoseconds);
 		maintainLogSize(&rtOpts.recordLog);
 	}
 }
@@ -1392,12 +1393,10 @@ nanoSleep(TimeInternal * t)
 {
 	struct timespec ts, tr;
 
-	ts.tv_sec = t->seconds;
-	ts.tv_nsec = t->nanoseconds;
+	ti_to_timespec(t, &ts);
 
 	if (nanosleep(&ts, &tr) < 0) {
-		t->seconds = tr.tv_sec;
-		t->nanoseconds = tr.tv_nsec;
+		ti_to_timespec(t, &tr);
 		return FALSE;
 	}
 	return TRUE;
@@ -1461,8 +1460,8 @@ static const struct sigevent* timerIntHandler(void* data, int id) {
       return ;
     }
     tDataUpdated = TRUE;
-    time->seconds = tp.tv_sec;
-    time->nanoseconds = tp.tv_nsec;
+
+    ti_from_timespec(&tp, time);
     return;
   }
 
@@ -1484,9 +1483,8 @@ static const struct sigevent* timerIntHandler(void* data, int id) {
 
     nsec2timespec(&tp, tmpData.last_clock + clock_offset);
 
-    time->seconds = tp.tv_sec;
-    time->nanoseconds = tp.tv_nsec;
-  return;
+    ti_from_timespec(&tp, time);
+    return;
 #else
 
 #if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
@@ -1496,15 +1494,13 @@ static const struct sigevent* timerIntHandler(void* data, int id) {
 		PERROR("clock_gettime() failed, exiting.");
 		exit(0);
 	}
-	time->seconds = tp.tv_sec;
-	time->nanoseconds = tp.tv_nsec;
+	ti_from_timespec(&tp, time);
 
 #else
 
 	struct timeval tv;
 	gettimeofday(&tv, 0);
-	time->seconds = tv.tv_sec;
-	time->nanoseconds = tv.tv_usec * 1000;
+	ti_from_timeval(&tv, time);
 
 #endif /* _POSIX_TIMERS */
 #endif /* __QNXNTO__ */
@@ -1524,14 +1520,12 @@ getTimeMonotonic(TimeInternal * time)
 		PERROR("clock_gettime() failed, exiting.");
 		exit(0);
 	}
-	time->seconds = tp.tv_sec;
-	time->nanoseconds = tp.tv_nsec;
+	ti_from_timespec(&tp, time);
 #else
 
 	struct timeval tv;
 	gettimeofday(&tv, 0);
-	time->seconds = tv.tv_sec;
-	time->nanoseconds = tv.tv_usec * 1000;
+	ti_from_timeval(&tv, time);
 
 #endif /* _POSIX_TIMERS */
 }
@@ -1544,14 +1538,12 @@ setTime(TimeInternal * time)
 #if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
 
 	struct timespec tp;
-	tp.tv_sec = time->seconds;
-	tp.tv_nsec = time->nanoseconds;
+	ti_to_timespec(time, &tp);
 
 #else
 
 	struct timeval tv;
-	tv.tv_sec = time->seconds;
-	tv.tv_usec = time->nanoseconds / 1000;
+	ti_to_timeval(time, &tv);
 
 #endif /* _POSIX_TIMERS */
 
@@ -1568,7 +1560,7 @@ setTime(TimeInternal * time)
 
 #endif /* _POSIX_TIMERS */
 
-	struct timespec tmpTs = { time->seconds,0 };
+	struct timespec tmpTs = {ti_seconds(time), 0};
 
 	char timeStr[MAXTIMESTR];
 	strftime(timeStr, MAXTIMESTR, "%x %X", localtime(&tmpTs.tv_sec));
@@ -1617,20 +1609,17 @@ void setRtc(TimeInternal *timeToSet)
 
 	DBGV("Usable RTC device: %s\n",rtcDev);
 
-	if(timeToSet->seconds == 0 && timeToSet->nanoseconds==0) {
-	    getTime(timeToSet);
+	if (ti_is_zero(timeToSet)) {
+		getTime(timeToSet);
 	}
-
-
 
 	if((rtcFd = open(rtcDev, O_RDONLY)) < 0) {
 		PERROR("Could not set RTC time: error opening %s", rtcDev);
 		return;
 	}
 
-	seconds = (time_t)timeToSet->seconds;
-	if(timeToSet->nanoseconds >= 500000) seconds++;
-	tmTime =  gmtime(&seconds);
+	seconds = (time_t)round(ti_to_double(timeToSet));
+	tmTime = gmtime(&seconds);
 
 	DBGV("Set RTC from %d seconds to y: %d m: %d d: %d \n",timeToSet->seconds,tmTime->tm_year,tmTime->tm_mon,tmTime->tm_mday);
 
@@ -1981,8 +1970,7 @@ informClockSource(PtpClock* ptpClock)
 
 	tmx.modes = MOD_MAXERROR | MOD_ESTERROR;
 
-	tmx.maxerror = (ptpClock->currentDS.offsetFromMaster.seconds * 1E9 +
-			ptpClock->currentDS.offsetFromMaster.nanoseconds) / 1000;
+	tmx.maxerror = ptpClock->currentDS.offsetFromMaster.nanoseconds / 1000;
 	tmx.esterror = tmx.maxerror;
 
 	if (adjtimex(&tmx) < 0)
@@ -2355,17 +2343,16 @@ int parseLeapFile(char *path, LeapSecondInfo *info)
 
 	    /* next leap second date found */
 
-	    if((now.seconds ) < utcSeconds) {
-		info->nextOffset = ntpOffset;
-		info->endTime = utcSeconds;
-		info->startTime = utcSeconds - 86400;
-		break;
+	    if (ti_seconds(&now) < utcSeconds) {
+		    info->nextOffset = ntpOffset;
+		    info->endTime = utcSeconds;
+		    info->startTime = utcSeconds - 86400;
+		    break;
 	    } else
-	    /* current leap second value found */
-		if(now.seconds >= utcSeconds) {
-		info->currentOffset = ntpOffset;
-	    }
-
+		    /* current leap second value found */
+		    if (ti_seconds(&now) >= utcSeconds) {
+			    info->currentOffset = ntpOffset;
+		    }
 	}
 
     }   
@@ -2373,9 +2360,9 @@ int parseLeapFile(char *path, LeapSecondInfo *info)
     fclose(leapFP);
 
     /* leap file past expiry date */
-    if(utcExpiry && utcExpiry < now.seconds) {
-	WARNING("Leap seconds file is expired. Please download the current version\n");
-	return 0;
+    if (utcExpiry && utcExpiry < ti_seconds(&now)) {
+	    WARNING("Leap seconds file is expired. Please download the current version\n");
+	    return 0;
     }
 
     /* we have the current offset - the rest can be invalid but at least we have this */
@@ -2387,10 +2374,13 @@ int parseLeapFile(char *path, LeapSecondInfo *info)
     if((info->startTime == 0) || (info->endTime == 0) ||
 	(info->currentOffset == 0) || (info->nextOffset == 0)) {
 	return 0;
-	INFO("Leap seconds file %s loaded (incomplete): now %d, current %d next %d from %d to %d, type %s\n", path,
-	now.seconds,
-	info->currentOffset, info->nextOffset,
-	info->startTime, info->endTime, info->leapType > 0 ? "positive" : info->leapType < 0 ? "negative" : "unknown");
+	INFO("Leap seconds file %s loaded (incomplete): now %d, current %d next %d from %d to %d, "
+	     "type %s\n",
+	     path, ti_seconds(&now), info->currentOffset, info->nextOffset, info->startTime,
+	     info->endTime,
+	     info->leapType > 0	  ? "positive"
+	     : info->leapType < 0 ? "negative"
+				  : "unknown");
     }
 
     if(info->nextOffset > info->currentOffset) {
@@ -2402,9 +2392,10 @@ int parseLeapFile(char *path, LeapSecondInfo *info)
     }
 
     INFO("Leap seconds file %s loaded: now %d, current %d next %d from %d to %d, type %s\n", path,
-	now.seconds,
-	info->currentOffset, info->nextOffset,
-	info->startTime, info->endTime, info->leapType > 0 ? "positive" : info->leapType < 0 ? "negative" : "unknown");
+	 ti_seconds(&now), info->currentOffset, info->nextOffset, info->startTime, info->endTime,
+	 info->leapType > 0   ? "positive"
+	 : info->leapType < 0 ? "negative"
+			      : "unknown");
     info->valid = TRUE;
     return 1;
 
@@ -2428,11 +2419,10 @@ updateXtmp (TimeInternal oldTime, TimeInternal newTime)
 		strncpy(utx.ut_line, OTIME_MSG, sizeof(utx.ut_line));
 #endif /* OTIME_MSG */
 #ifdef OLD_TIME
-		utx.ut_tv.tv_sec = oldTime.seconds;
-		utx.ut_tv.tv_usec = oldTime.nanoseconds / 1000;
+		ti_to_timeval(&oldTime, (struct timeval *)&(utx.ut_tv));
 		utx.ut_type = OLD_TIME;
 #else /* no ut_type */
-		utx.ut_time = oldTime.seconds;
+		utx.ut_time = ti_seconds(&oldTime);
 #endif /* OLD_TIME */
 
 /* ======== BEGIN  OLD TIME EVENT - UTMPX / WTMPX =========== */
@@ -2462,15 +2452,14 @@ updateXtmp (TimeInternal oldTime, TimeInternal newTime)
 #ifdef OLD_TIME
 
 #ifdef HAVE_STRUCT_UTMP_UT_TIME
-		ut.ut_time = oldTime.seconds;
+		ut.ut_time = ti_seconds(&oldTime);
 #else
-		ut.ut_tv.tv_sec = oldTime.seconds;
-		ut.ut_tv.tv_usec = oldTime.nanoseconds / 1000;
+		TimeInternal_to_tv(&newTime, &ut.ut_tv);
 #endif /* HAVE_STRUCT_UTMP_UT_TIME */
 
 		ut.ut_type = OLD_TIME;
 #else /* no ut_type */
-		ut.ut_time = oldTime.seconds;
+		ut.ut_time = ti_seconds(&oldTime);
 #endif /* OLD_TIME */
 
 /* ======== BEGIN  OLD TIME EVENT - UTMP / WTMP =========== */
@@ -2514,8 +2503,7 @@ updateXtmp (TimeInternal oldTime, TimeInternal newTime)
 		strncpy(utx.ut_line, NTIME_MSG, sizeof(utx.ut_line));
 #endif /* NTIME_MSG */
 #ifdef NEW_TIME
-		utx.ut_tv.tv_sec = newTime.seconds;
-		utx.ut_tv.tv_usec = newTime.nanoseconds / 1000;
+		ti_to_timeval(&newTime, (struct timeval *)&(utx.ut_tv));
 		utx.ut_type = NEW_TIME;
 #else /* no ut_type */
 		utx.ut_time = newTime.seconds;
@@ -2546,14 +2534,13 @@ updateXtmp (TimeInternal oldTime, TimeInternal newTime)
 #ifdef NEW_TIME
 
 #ifdef HAVE_STRUCT_UTMP_UT_TIME
-		ut.ut_time = newTime.seconds;
+		ut.ut_time = ti_seconds(&newTime);
 #else
-		ut.ut_tv.tv_sec = newTime.seconds;
-		ut.ut_tv.tv_usec = newTime.nanoseconds / 1000;
+		TimeInternal_to_tv(&newTime, &ut.ut_tv);
 #endif /* HAVE_STRUCT_UTMP_UT_TIME */
 		ut.ut_type = NEW_TIME;
 #else /* no ut_type */
-		ut.ut_time = newTime.seconds;
+		ut.ut_time = ti_seconds(&newTime);
 #endif /* NEW_TIME */
 
 /* ======== BEGIN  NEW TIME EVENT - UTMP / WTMP =========== */

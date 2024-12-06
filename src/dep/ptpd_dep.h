@@ -186,6 +186,19 @@ static inline Integer32 flip32(x)
 #endif
 */
 
+#if defined(PTPD_MSBF)
+#define flip64(x) (x)
+#elif defined(PTPD_LSBF)
+static inline Integer64
+flip64(Integer64 x)
+{
+	return ((x >> 54) & 0x00000000000000ffLL) | ((x >> 40) & 0x000000000000ff00LL) |
+	       ((x >> 24) & 0x0000000000ff0000LL) | ((x >> 8) & 0x00000000ff000000LL) |
+	       ((x << 8) & 0x000000ff00000000LL) | ((x << 24) & 0x0000ff0000000000LL) |
+	       ((x << 40) & 0x00ff000000000000LL) | ((x << 54) & 0xff00000000000000LL);
+}
+#endif /* PTPD_MSBF */
+
 /** \}*/
 
 
