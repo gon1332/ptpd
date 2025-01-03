@@ -14,7 +14,7 @@
 #define TIME_INTERVAL_MIN 0x8000000000000000LL
 
 void
-internalTime_to_integer64(TimeInternal from, Integer64 *to)
+ti_to_integer64(TimeInternal from, Integer64 *to)
 {
 	if (from.nanoseconds > ((int64_t)TIME_INTERVAL_MAX >> 16)) {
 		*to = TIME_INTERVAL_MAX;
@@ -26,13 +26,13 @@ internalTime_to_integer64(TimeInternal from, Integer64 *to)
 }
 
 void
-integer64_to_internalTime(Integer64 from, TimeInternal *to)
+ti_from_integer64(Integer64 from, TimeInternal *to)
 {
 	to->nanoseconds = from >> 16;
 }
 
 void
-fromInternalTime(const TimeInternal *from, Timestamp *to)
+ti_to_timestamp(const TimeInternal *from, Timestamp *to)
 {
 	// TODO: How to handle negative TimeInternal?
 	uint64_t seconds = from->nanoseconds / NSEC_IN_SEC;
@@ -43,32 +43,32 @@ fromInternalTime(const TimeInternal *from, Timestamp *to)
 }
 
 void
-toInternalTime(TimeInternal *to, const Timestamp *from)
+ti_from_timestamp(const Timestamp *from, TimeInternal *to)
 {
 	to->nanoseconds = from->secondsField.lsb * NSEC_IN_SEC + from->nanosecondsField;
 }
 
 void
-ts_to_InternalTime(const struct timespec *from, TimeInternal *to)
+ti_from_timespec(const struct timespec *from, TimeInternal *to)
 {
 	to->nanoseconds = from->tv_sec * NSEC_IN_SEC + from->tv_nsec;
 }
 
 void
-InternalTime_to_ts(const TimeInternal *from, struct timespec *to)
+ti_to_timespec(const TimeInternal *from, struct timespec *to)
 {
 	to->tv_sec = from->nanoseconds / NSEC_IN_SEC;
 	to->tv_nsec = from->nanoseconds % NSEC_IN_SEC;
 }
 
 void
-tv_to_InternalTime(const struct timeval *from, TimeInternal *to)
+ti_from_timeval(const struct timeval *from, TimeInternal *to)
 {
 	to->nanoseconds = from->tv_sec * NSEC_IN_SEC + from->tv_usec * NSEC_IN_USEC;
 }
 
 void
-InternalTime_to_tv(const TimeInternal *from, struct timeval *to)
+ti_to_timeval(const TimeInternal *from, struct timeval *to)
 {
 	to->tv_sec = from->nanoseconds / NSEC_IN_SEC;
 	to->tv_usec = (from->nanoseconds % (int64_t)NSEC_IN_SEC) / NSEC_IN_USEC;

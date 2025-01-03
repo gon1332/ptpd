@@ -878,11 +878,11 @@ void handleMMCurrentDataSet(MsgManagement* incoming, MsgManagement* outgoing, Pt
 		data->stepsRemoved = ptpClock->currentDS.stepsRemoved;
 		TimeInterval oFM;
 		oFM.scaledNanoseconds = 0;
-		internalTime_to_integer64(ptpClock->currentDS.offsetFromMaster, &oFM.scaledNanoseconds);
+		ti_to_integer64(ptpClock->currentDS.offsetFromMaster, &oFM.scaledNanoseconds);
 		data->offsetFromMaster.scaledNanoseconds = oFM.scaledNanoseconds;
 		TimeInterval mPD;
 		mPD.scaledNanoseconds = 0;
-		internalTime_to_integer64(ptpClock->currentDS.meanPathDelay, &mPD.scaledNanoseconds);
+		ti_to_integer64(ptpClock->currentDS.meanPathDelay, &mPD.scaledNanoseconds);
 		data->meanPathDelay.scaledNanoseconds = mPD.scaledNanoseconds;
 		break;
 	case RESPONSE:
@@ -1012,7 +1012,7 @@ void handleMMPortDataSet(MsgManagement* incoming, MsgManagement* outgoing, PtpCl
 		data->logMinDelayReqInterval = ptpClock->portDS.logMinDelayReqInterval;
 		TimeInterval pMPD;
 		pMPD.scaledNanoseconds = 0;
-		internalTime_to_integer64(ptpClock->portDS.peerMeanPathDelay, &pMPD.scaledNanoseconds);
+		ti_to_integer64(ptpClock->portDS.peerMeanPathDelay, &pMPD.scaledNanoseconds);
 		data->peerMeanPathDelay.scaledNanoseconds = pMPD.scaledNanoseconds;
 		data->logAnnounceInterval = ptpClock->portDS.logAnnounceInterval;
 		data->announceReceiptTimeout = ptpClock->portDS.announceReceiptTimeout;
@@ -1428,7 +1428,7 @@ void handleMMTime(MsgManagement* incoming, MsgManagement* outgoing, PtpClock* pt
 			ti_inc(&internalTime, ptpClock->timePropertiesDS.currentUtcOffset,
 			       INC_SECONDS);
 		}
-		fromInternalTime(&internalTime, &data->currentTime);
+		ti_to_timestamp(&internalTime, &data->currentTime);
 		timestamp_display(&data->currentTime);
 		break;
 	case RESPONSE:

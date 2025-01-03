@@ -1393,10 +1393,10 @@ nanoSleep(TimeInternal * t)
 {
 	struct timespec ts, tr;
 
-	InternalTime_to_ts(t, &ts);
+	ti_to_timespec(t, &ts);
 
 	if (nanosleep(&ts, &tr) < 0) {
-		InternalTime_to_ts(t, &tr);
+		ti_to_timespec(t, &tr);
 		return FALSE;
 	}
 	return TRUE;
@@ -1461,7 +1461,7 @@ static const struct sigevent* timerIntHandler(void* data, int id) {
     }
     tDataUpdated = TRUE;
 
-    ts_to_InternalTime(&tp, time);
+    ti_from_timespec(&tp, time);
     return;
   }
 
@@ -1483,7 +1483,7 @@ static const struct sigevent* timerIntHandler(void* data, int id) {
 
     nsec2timespec(&tp, tmpData.last_clock + clock_offset);
 
-    ts_to_InternalTime(&tp, time);
+    ti_from_timespec(&tp, time);
     return;
 #else
 
@@ -1494,13 +1494,13 @@ static const struct sigevent* timerIntHandler(void* data, int id) {
 		PERROR("clock_gettime() failed, exiting.");
 		exit(0);
 	}
-	ts_to_InternalTime(&tp, time);
+	ti_from_timespec(&tp, time);
 
 #else
 
 	struct timeval tv;
 	gettimeofday(&tv, 0);
-	tv_to_InternalTime(&tv, time);
+	ti_from_timeval(&tv, time);
 
 #endif /* _POSIX_TIMERS */
 #endif /* __QNXNTO__ */
@@ -1520,12 +1520,12 @@ getTimeMonotonic(TimeInternal * time)
 		PERROR("clock_gettime() failed, exiting.");
 		exit(0);
 	}
-	ts_to_InternalTime(&tp, time);
+	ti_from_timespec(&tp, time);
 #else
 
 	struct timeval tv;
 	gettimeofday(&tv, 0);
-	tv_to_InternalTime(&tv, time);
+	ti_from_timeval(&tv, time);
 
 #endif /* _POSIX_TIMERS */
 }
@@ -1538,12 +1538,12 @@ setTime(TimeInternal * time)
 #if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
 
 	struct timespec tp;
-	InternalTime_to_ts(time, &tp);
+	ti_to_timespec(time, &tp);
 
 #else
 
 	struct timeval tv;
-	InternalTime_to_tv(time, &tv);
+	ti_to_timeval(time, &tv);
 
 #endif /* _POSIX_TIMERS */
 
@@ -2419,7 +2419,7 @@ updateXtmp (TimeInternal oldTime, TimeInternal newTime)
 		strncpy(utx.ut_line, OTIME_MSG, sizeof(utx.ut_line));
 #endif /* OTIME_MSG */
 #ifdef OLD_TIME
-		InternalTime_to_tv(&oldTime, (struct timeval *)&(utx.ut_tv));
+		ti_to_timeval(&oldTime, (struct timeval *)&(utx.ut_tv));
 		utx.ut_type = OLD_TIME;
 #else /* no ut_type */
 		utx.ut_time = ti_seconds(&oldTime);
@@ -2503,7 +2503,7 @@ updateXtmp (TimeInternal oldTime, TimeInternal newTime)
 		strncpy(utx.ut_line, NTIME_MSG, sizeof(utx.ut_line));
 #endif /* NTIME_MSG */
 #ifdef NEW_TIME
-		InternalTime_to_tv(&newTime, (struct timeval *)&(utx.ut_tv));
+		ti_to_timeval(&newTime, (struct timeval *)&(utx.ut_tv));
 		utx.ut_type = NEW_TIME;
 #else /* no ut_type */
 		utx.ut_time = newTime.seconds;

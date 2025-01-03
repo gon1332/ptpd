@@ -31,50 +31,51 @@ enum increment_type {
  * @param[in] from Internal time representation
  * @param[out] to Time in scaled nanoseconds according to 5.3.2
  */
-void internalTime_to_integer64(TimeInternal from, Integer64 *to);
+void ti_to_integer64(TimeInternal from, Integer64 *to);
 
 /** Converts TimeInterval to TimeInternal
  * @note TimeInternal does not represent fractional nanoseconds
  * @param[in] from Time in scaled nanoseconds according to 5.3.2
  * @param[out] to Internal time representation
  */
-void integer64_to_internalTime(Integer64 from, TimeInternal *to);
+void ti_from_integer64(Integer64 from, TimeInternal *to);
 
 /** Converts TimeInterval to Timestamp
  * @param[in] from Internal time representation
  * @param[out] to Time according to 5.3.3
  */
-void fromInternalTime(const TimeInternal *from, Timestamp *to);
+void ti_to_timestamp(const TimeInternal *from, Timestamp *to);
 
 /** Converts Timestamp to TimeInterval
- * @param[out] to Internal time representation
  * @param[in] from Time according to 5.3.3
+ * @param[out] to Internal time representation
  */
-void toInternalTime(TimeInternal *to, const Timestamp *from);
+void ti_from_timestamp(const Timestamp *from, TimeInternal *to);
 
 /** Converts struct timespec to TimeInternal
  * @param[in] from Time in struct timespec
  * @param[out] to Internal time representation
  */
-void ts_to_InternalTime(const struct timespec *from, TimeInternal *to);
+void ti_from_timespec(const struct timespec *from, TimeInternal *to);
 
 /** Converts struct timespec to TimeInternal
  * @param[in] from Internal time representation
  * @param[out] to Time in struct timespec
  */
-void InternalTime_to_ts(const TimeInternal *from, struct timespec *to);
+// void InternalTime_to_ts(const TimeInternal *from, struct timespec *to);
+void ti_to_timespec(const TimeInternal *from, struct timespec *to);
 
 /** Converts struct timeval to TimeInternal
  * @param[in] from Time in struct timeval
  * @param[out] to Internal time representation
  */
-void tv_to_InternalTime(const struct timeval *from, TimeInternal *to);
+void ti_from_timeval(const struct timeval *from, TimeInternal *to);
 
 /** Converts struct timeval to TimeInternal
  * @param[in] from Internal time representation
  * @param[out] to Time in struct timeval
  */
-void InternalTime_to_tv(const TimeInternal *from, struct timeval *to);
+void ti_to_timeval(const TimeInternal *from, struct timeval *to);
 
 /**
  *

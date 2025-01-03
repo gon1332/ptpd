@@ -48,38 +48,38 @@ tearDown(void)
 }
 
 void
-test_TimeInternal_to_Integer64(void)
+test_ti_to_time_interval(void)
 {
 	Integer64 to;
 	{
 		TimeInternal from = {0};
-		internalTime_to_integer64(from, &to);
+		ti_to_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(0LL, to_int64_t(&to));
 	}
 	{
 		TimeInternal from = {1};
-		internalTime_to_integer64(from, &to);
+		ti_to_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(65536LL, to_int64_t(&to));
 	}
 	{
 		TimeInternal from = {NSEC_IN_SEC};
-		internalTime_to_integer64(from, &to);
+		ti_to_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(65536000000000LL, to_int64_t(&to));
 	}
 	{
 		TimeInternal from = {-NSEC_IN_SEC};
-		internalTime_to_integer64(from, &to);
+		ti_to_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(-65536000000000LL, to_int64_t(&to));
 	}
 	{
 		TimeInternal from = {2 * NSEC_IN_SEC + 2};
-		internalTime_to_integer64(from, &to);
+		ti_to_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(131072000131072LL, to_int64_t(&to));
 	}
 	/* Positive largest TimeInterval */
 	{
 		TimeInternal from = {TIME_INTERNAL_MAX_SEC * NSEC_IN_SEC + TIME_INTERNAL_MAX_NSEC};
-		internalTime_to_integer64(from, &to);
+		ti_to_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64_MESSAGE(TIME_INTERVAL_MAX, to_int64_t(&to),
 						"Positive largest time TimeInterval is not "
 						"represented correctly by TimeInternal");
@@ -87,7 +87,7 @@ test_TimeInternal_to_Integer64(void)
 	/* Negative largest TimeInterval */
 	{
 		TimeInternal from = {TIME_INTERNAL_MIN_SEC * NSEC_IN_SEC + TIME_INTERNAL_MIN_NSEC};
-		internalTime_to_integer64(from, &to);
+		ti_to_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64_MESSAGE(TIME_INTERVAL_MIN, to_int64_t(&to),
 						"Negative largest time TimeInterval is not "
 						"represented correctly by TimeInternal");
@@ -95,7 +95,7 @@ test_TimeInternal_to_Integer64(void)
 	/* Positive out of range */
 	{
 		TimeInternal from = {(TIME_INTERNAL_MAX_SEC + 1) * NSEC_IN_SEC};
-		internalTime_to_integer64(from, &to);
+		ti_to_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64_MESSAGE(TIME_INTERVAL_MAX, to_int64_t(&to),
 						"Positive time outside the maximum range is not "
 						"encoded as the largest positive value of "
@@ -104,7 +104,7 @@ test_TimeInternal_to_Integer64(void)
 	/* Negative out of range */
 	{
 		TimeInternal from = {(TIME_INTERNAL_MIN_SEC - 1) * NSEC_IN_SEC};
-		internalTime_to_integer64(from, &to);
+		ti_to_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64_MESSAGE(TIME_INTERVAL_MIN, to_int64_t(&to),
 						"Negative time outside the maximum range is not "
 						"encoded as the largest negative value of "
@@ -113,62 +113,62 @@ test_TimeInternal_to_Integer64(void)
 }
 
 void
-test_Integer64_to_TimeInternal(void)
+test_ti_from_time_interval(void)
 {
 	TimeInternal to;
 	{
-		Integer64 from = 0LL;
-		integer64_to_internalTime(from, &to);
+		const Integer64 from = 0LL;
+		ti_from_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(0LL, to.nanoseconds);
 	}
 	{
-		Integer64 from = 65536LL;
-		integer64_to_internalTime(from, &to);
+		const Integer64 from = 65536LL;
+		ti_from_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(1LL, to.nanoseconds);
 	}
 	{
-		Integer64 from = 65536000000000LL;
-		integer64_to_internalTime(from, &to);
+		const Integer64 from = 65536000000000LL;
+		ti_from_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(NSEC_IN_SEC, to.nanoseconds);
 	}
 	{
-		Integer64 from = -65536000000000LL;
-		integer64_to_internalTime(from, &to);
+		const Integer64 from = -65536000000000LL;
+		ti_from_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(-NSEC_IN_SEC, to.nanoseconds);
 	}
 	{
-		Integer64 from = 131072000131072LL;
-		integer64_to_internalTime(from, &to);
+		const Integer64 from = 131072000131072LL;
+		ti_from_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(2 * NSEC_IN_SEC + 2, to.nanoseconds);
 	}
 	/* Positive largest TimeInterval */
 	{
-		Integer64 from = TIME_INTERVAL_MAX;
-		integer64_to_internalTime(from, &to);
+		const Integer64 from = TIME_INTERVAL_MAX;
+		ti_from_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(TIME_INTERNAL_MAX_SEC * NSEC_IN_SEC +
 						TIME_INTERNAL_MAX_NSEC,
 					to.nanoseconds);
 	}
 	/* Negative largest TimeInterval */
 	{
-		Integer64 from = TIME_INTERVAL_MIN;
-		integer64_to_internalTime(from, &to);
+		const Integer64 from = TIME_INTERVAL_MIN;
+		ti_from_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(TIME_INTERNAL_MIN_SEC * NSEC_IN_SEC +
 						TIME_INTERNAL_MIN_NSEC,
 					to.nanoseconds);
 	}
 	/* Fractional nanoseconds are not considered */
 	{
-		Integer64 from = TIME_INTERVAL_MAX + 1;
-		integer64_to_internalTime(from, &to);
+		const Integer64 from = TIME_INTERVAL_MAX + 1;
+		ti_from_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(TIME_INTERNAL_MAX_SEC * NSEC_IN_SEC +
 						TIME_INTERNAL_MAX_NSEC,
 					to.nanoseconds);
 	}
 	/* Fractional nanoseconds are not considered */
 	{
-		Integer64 from = TIME_INTERVAL_MIN + 1;
-		integer64_to_internalTime(from, &to);
+		const Integer64 from = TIME_INTERVAL_MIN + 1;
+		ti_from_integer64(from, &to);
 		TEST_ASSERT_EQUAL_INT64(TIME_INTERNAL_MIN_SEC * NSEC_IN_SEC +
 						TIME_INTERNAL_MIN_NSEC,
 					to.nanoseconds);
@@ -176,106 +176,106 @@ test_Integer64_to_TimeInternal(void)
 }
 
 void
-test_TimeInternal_to_Timestamp(void)
+test_ti_to_timestamp(void)
 {
 	Timestamp to;
 	{
 		TimeInternal from = {0};
-		fromInternalTime(&from, &to);
+		ti_to_timestamp(&from, &to);
 		TEST_ASSERT_EQUAL_UINT48(0ULL, to.secondsField);
 		TEST_ASSERT_EQUAL_UINT32(0UL, to.nanosecondsField);
 	}
 	{
-		TimeInternal from = {1};
-		fromInternalTime(&from, &to);
+		const TimeInternal from = {1};
+		ti_to_timestamp(&from, &to);
 		TEST_ASSERT_EQUAL_UINT48(0ULL, to.secondsField);
 		TEST_ASSERT_EQUAL_UINT32(1UL, to.nanosecondsField);
 	}
 	{
-		TimeInternal from = {2 * NSEC_IN_SEC + 1};
-		fromInternalTime(&from, &to);
+		const TimeInternal from = {2 * NSEC_IN_SEC + 1};
+		ti_to_timestamp(&from, &to);
 		TEST_ASSERT_EQUAL_UINT48(2ULL, to.secondsField);
 		TEST_ASSERT_EQUAL_UINT32(1UL, to.nanosecondsField);
 	}
 	{
 		memset(&to, 0xFF, sizeof(to));
-		TimeInternal from = {1 * NSEC_IN_SEC + NSEC_IN_SEC - 1};
-		fromInternalTime(&from, &to);
+		const TimeInternal from = {1 * NSEC_IN_SEC + NSEC_IN_SEC - 1};
+		ti_to_timestamp(&from, &to);
 		TEST_ASSERT_EQUAL_UINT48(1ULL, to.secondsField);
 		TEST_ASSERT_EQUAL_UINT32(NSEC_IN_SEC - 1, to.nanosecondsField);
 	}
 }
 
 void
-test_Timestamp_to_TimeInternal(void)
+test_ti_from_timestamp(void)
 {
 	TimeInternal to;
 	{
-		Timestamp from = {{0L, 0}, 0L};
-		toInternalTime(&to, &from);
+		const Timestamp from = {{0L, 0}, 0L};
+		ti_from_timestamp(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(0LL, to.nanoseconds);
 	}
 	{
-		Timestamp from = {{0L, 0}, 1L};
-		toInternalTime(&to, &from);
+		const Timestamp from = {{0L, 0}, 1L};
+		ti_from_timestamp(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(1LL, to.nanoseconds);
 	}
 	{
-		Timestamp from = {{1L, 0}, 1L};
-		toInternalTime(&to, &from);
+		const Timestamp from = {{1L, 0}, 1L};
+		ti_from_timestamp(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(1 * NSEC_IN_SEC + 1, to.nanoseconds);
 	}
 	{
-		Timestamp from = {{INT32_MAX, 0}, NSEC_IN_SEC - 1};
-		toInternalTime(&to, &from);
+		const Timestamp from = {{INT32_MAX, 0}, NSEC_IN_SEC - 1};
+		ti_from_timestamp(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(INT32_MAX * NSEC_IN_SEC + NSEC_IN_SEC - 1, to.nanoseconds);
 	}
 }
 
 void
-test_struct_timespec_to_TimeInternal(void)
+test_ti_from_timespec(void)
 {
 	TimeInternal to;
 	{
-		struct timespec from = {0, 0};
-		ts_to_InternalTime(&from, &to);
+		const struct timespec from = {0, 0};
+		ti_from_timespec(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(0LL, to.nanoseconds);
 	}
 	{
-		struct timespec from = {0, 1};
-		ts_to_InternalTime(&from, &to);
+		const struct timespec from = {0, 1};
+		ti_from_timespec(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(1LL, to.nanoseconds);
 	}
 	{
 		/* GNU Libc generates struct timespec with tv_nsec less than 1000000000.
 		 * No need to test more than that.
 		 */
-		struct timespec from = {INT32_MAX, NSEC_IN_SEC - 1};
-		ts_to_InternalTime(&from, &to);
+		const struct timespec from = {INT32_MAX, NSEC_IN_SEC - 1};
+		ti_from_timespec(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(INT32_MAX * NSEC_IN_SEC + NSEC_IN_SEC - 1, to.nanoseconds);
 	}
 }
 
 void
-test_struct_timeval_to_TimeInternal(void)
+test_ti_from_timeval(void)
 {
 	TimeInternal to;
 	{
-		struct timeval from = {0, 0};
-		tv_to_InternalTime(&from, &to);
+		const struct timeval from = {0, 0};
+		ti_from_timeval(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(0LL, to.nanoseconds);
 	}
 	{
-		struct timeval from = {0, 1};
-		tv_to_InternalTime(&from, &to);
+		const struct timeval from = {0, 1};
+		ti_from_timeval(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(1000LL, to.nanoseconds);
 	}
 	{
 		/* GNU Libc generates struct timeval with tv_usec less than 1000000.
 		 * No need to test more than that.
 		 */
-		struct timeval from = {INT32_MAX, USEC_IN_SEC - 1};
-		tv_to_InternalTime(&from, &to);
+		const struct timeval from = {INT32_MAX, USEC_IN_SEC - 1};
+		ti_from_timeval(&from, &to);
 		TEST_ASSERT_EQUAL_INT64(INT32_MAX * NSEC_IN_SEC + NSEC_IN_SEC - 1000,
 					to.nanoseconds);
 	}
@@ -486,12 +486,12 @@ main(void)
 {
 	UNITY_BEGIN();
 
-	RUN_TEST(test_TimeInternal_to_Integer64);
-	RUN_TEST(test_Integer64_to_TimeInternal);
-	RUN_TEST(test_TimeInternal_to_Timestamp);
-	RUN_TEST(test_Timestamp_to_TimeInternal);
-	RUN_TEST(test_struct_timespec_to_TimeInternal);
-	RUN_TEST(test_struct_timeval_to_TimeInternal);
+	RUN_TEST(test_ti_to_time_interval);
+	RUN_TEST(test_ti_from_time_interval);
+	RUN_TEST(test_ti_to_timestamp);
+	RUN_TEST(test_ti_from_timestamp);
+	RUN_TEST(test_ti_from_timespec);
+	RUN_TEST(test_ti_from_timeval);
 	RUN_TEST(test_addTime);
 	RUN_TEST(test_subTime);
 	RUN_TEST(test_ti_div2);

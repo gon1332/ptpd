@@ -1408,7 +1408,7 @@ netSelect(TimeInternal * timeout, NetPath * netPath, fd_set *readfds)
 			ERROR("Negative timeout attempted for select()\n");
 			return -1;
 		}
-		InternalTime_to_tv(timeout, &tv);
+		ti_to_timeval(timeout, &tv);
 		tv_ptr = &tv;
 	} else {
 		tv_ptr = NULL;
@@ -1616,7 +1616,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 				if(cmsg->cmsg_type == SO_TIMESTAMPING ||
 				    cmsg->cmsg_type == SO_TIMESTAMPNS) {
 					ts = (struct timespec *)CMSG_DATA(cmsg);
-					ts_to_InternalTime(ts, time);
+					ti_from_timespec(ts, time);
 					timestampValid = TRUE;
 					DBG("rcvevent: SO_TIMESTAMP%s %s time stamp: %lfs\n",
 					    netPath->txTimestampFailure ? "NS" : "ING",
@@ -1627,7 +1627,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 #elif defined(SO_TIMESTAMPNS)
 				if(cmsg->cmsg_type == SCM_TIMESTAMPNS) {
 					ts = (struct timespec *)CMSG_DATA(cmsg);
-					ts_to_InternalTime(ts, time);
+					ti_from_timespec(ts, time);
 					timestampValid = TRUE;
 					DBGV("kernel NANO recv time stamp %lfs\n",
 					     timeInternalToDouble(time));
@@ -1637,7 +1637,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 				if(cmsg->cmsg_type == SCM_BINTIME) {
 					bt = (struct bintime *)CMSG_DATA(cmsg);
 					bintime2timespec(bt, &ts);
-					ts_to_InternalTime(&ts, time);
+					ti_from_timespec(&ts, time);
 					timestampValid = TRUE;
 					DBGV("kernel NANO recv time stamp %lfs\n",
 					     timeInternalToDouble(time));
@@ -1648,7 +1648,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 #if defined(SO_TIMESTAMP)
 				if(cmsg->cmsg_type == SCM_TIMESTAMP) {
 					tv = (struct timeval *)CMSG_DATA(cmsg);
-					tv_to_InternalTime(tv, time);
+					ti_from_timeval(tv, time);
 					timestampValid = TRUE;
 					DBGV("kernel MICRO recv time stamp %lfs\n", ,
 					     timeInternalToDouble(time));

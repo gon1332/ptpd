@@ -403,9 +403,9 @@ snmpHeaderIndexBest(struct snmpHeaderIndex *idx)
 	  counter64_ret.high = (V) >> 32,	\
 	  *var_len = sizeof (counter64_ret),	\
 	  (u_char*)&counter64_ret )
-#define SNMP_TIMEINTERNAL(V)                                                      \
-	(*var_len = sizeof(counter64_ret), internalTime_to_integer64(V, &bigint), \
-	 counter64_ret.low = flip64(bigint) & 0xffffffff,                         \
+#define SNMP_TIMEINTERNAL(V)                                            \
+	(*var_len = sizeof(counter64_ret), ti_to_integer64(V, &bigint), \
+	 counter64_ret.low = flip64(bigint) & 0xffffffff,               \
 	 counter64_ret.high = flip64(bigint) >> 32, (u_char *)&counter64_ret)
 #define SNMP_INTEGER(V)		    \
 	( long_ret = (V),	    \
@@ -1828,7 +1828,7 @@ populateNotif (netsnmp_variable_list** varBinds, int eventType, PtpEventData *ev
 		    {
 			struct counter64 ofmNum;
 			Integer64  tmpi64;
-			internalTime_to_integer64(eventData->currentDS.offsetFromMaster, &tmpi64);
+			ti_to_integer64(eventData->currentDS.offsetFromMaster, &tmpi64);
 			ofmNum.low = flip64(tmpi64) & 0xffffffff;
 			ofmNum.high = flip64(tmpi64) >> 32;
 
@@ -1915,7 +1915,7 @@ populateNotif (netsnmp_variable_list** varBinds, int eventType, PtpEventData *ev
 		    {
 			struct counter64 ofmNum;
 			Integer64  tmpi64;
-			internalTime_to_integer64(eventData->currentDS.offsetFromMaster, &tmpi64);
+			ti_to_integer64(eventData->currentDS.offsetFromMaster, &tmpi64);
 			ofmNum.low = flip64(tmpi64) & 0xffffffff;
 			ofmNum.high = flip64(tmpi64) >> 32;
 
