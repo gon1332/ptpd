@@ -77,15 +77,19 @@ void ti_from_timeval(const struct timeval *from, TimeInternal *to);
  */
 void ti_to_timeval(const TimeInternal *from, struct timeval *to);
 
-/**
- *
+/** Adds two TimeInternal
+ * @param[out] out The result
+ * @param[in] x First TimeInternal operand
+ * @param[in] y Second TimeInternal operand
  */
-void addTime(TimeInternal *out, const TimeInternal *x, const TimeInternal *y);
+void ti_add(TimeInternal *out, const TimeInternal *x, const TimeInternal *y);
 
-/**
- *
+/** Subtracts two TimeInternal
+ * @param[out] out The result
+ * @param[in] x First TimeInternal operand
+ * @param[in] y Second TimeInternal operand
  */
-void subTime(TimeInternal *out, const TimeInternal *x, const TimeInternal *y);
+void ti_sub(TimeInternal *out, const TimeInternal *x, const TimeInternal *y);
 
 /** Divides the time given by 2
  * @note It's an in-place function
@@ -148,7 +152,7 @@ double timeInternalToDouble(const TimeInternal *p);
 TimeInternal doubleToTimeInternal(double d);
 
 /**
- * @param[in] The time to test
+ * @param[in] t The time to test
  * @returns the amount of seconds contained in t
  */
 int32_t ti_seconds(const TimeInternal *t);

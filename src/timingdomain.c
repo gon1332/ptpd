@@ -477,7 +477,7 @@ ptpServiceClockUpdate (TimingService* service)
 #endif /* HAVE_SYS_TIMEX_H */
 
 	getTime(&oldTime);
-	subTime(&newTime, &oldTime, &ptpClock->currentDS.offsetFromMaster);
+	ti_sub(&newTime, &oldTime, &ptpClock->currentDS.offsetFromMaster);
 
 	/* Major time change */
 	if(clockStatus->majorChange){

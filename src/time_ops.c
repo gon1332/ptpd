@@ -75,13 +75,13 @@ ti_to_timeval(const TimeInternal *from, struct timeval *to)
 }
 
 void
-addTime(TimeInternal *out, const TimeInternal *op_a, const TimeInternal *op_b)
+ti_add(TimeInternal *out, const TimeInternal *op_a, const TimeInternal *op_b)
 {
 	out->nanoseconds = op_a->nanoseconds + op_b->nanoseconds;
 }
 
 void
-subTime(TimeInternal *out, const TimeInternal *op_a, const TimeInternal *op_b)
+ti_sub(TimeInternal *out, const TimeInternal *op_a, const TimeInternal *op_b)
 {
 	out->nanoseconds = op_a->nanoseconds - op_b->nanoseconds;
 }
@@ -138,7 +138,7 @@ ti_is_close(const TimeInternal *x, const TimeInternal *y, int error_ns)
 	TimeInternal diff;
 	TimeInternal err = {error_ns};
 
-	subTime(&diff, x, y);
+	ti_sub(&diff, x, y);
 	ti_abs(&diff);
 
 	return ti_cmp(&diff, &err) <= 0;

@@ -112,7 +112,7 @@ char *dump_TimeInternal2(const char *st1, const TimeInternal * p1, const char *s
 
 	/* display difference */
 	TimeInternal r;
-	subTime(&r, p1, p2);
+	ti_sub(&r, p1, p2);
 	n += snprintf(buf + n, BUF_SIZE - n, "   (diff: ");
 	n += snprint_TimeInternal(buf + n, BUF_SIZE - n, &r);
 	n += snprintf(buf + n, BUF_SIZE - n, ") ");

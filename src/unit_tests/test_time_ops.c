@@ -282,49 +282,49 @@ test_ti_from_timeval(void)
 }
 
 void
-test_addTime(void)
+test_ti_add(void)
 {
 	TimeInternal result;
 	{
 		TimeInternal time1 = {0};
 		TimeInternal time2 = {0};
-		addTime(&result, &time1, &time2);
+		ti_add(&result, &time1, &time2);
 		TEST_ASSERT_EQUAL_INT64(0LL, result.nanoseconds);
 	}
 	{
 		TimeInternal time1 = {10};
 		TimeInternal time2 = {20000};
-		addTime(&result, &time1, &time2);
+		ti_add(&result, &time1, &time2);
 		TEST_ASSERT_EQUAL_INT64(20010LL, result.nanoseconds);
 	}
 	{
 		TimeInternal time1 = {10};
 		TimeInternal time2 = {-1};
-		addTime(&result, &time1, &time2);
+		ti_add(&result, &time1, &time2);
 		TEST_ASSERT_EQUAL_INT64(9LL, result.nanoseconds);
 	}
 }
 
 void
-test_subTime(void)
+test_ti_sub(void)
 {
 	TimeInternal result;
 	{
 		TimeInternal time1 = {0};
 		TimeInternal time2 = {0};
-		subTime(&result, &time1, &time2);
+		ti_sub(&result, &time1, &time2);
 		TEST_ASSERT_EQUAL_INT64(0LL, result.nanoseconds);
 	}
 	{
 		TimeInternal time1 = {10};
 		TimeInternal time2 = {20};
-		subTime(&result, &time1, &time2);
+		ti_sub(&result, &time1, &time2);
 		TEST_ASSERT_EQUAL_INT64(-10LL, result.nanoseconds);
 	}
 	{
 		TimeInternal time1 = {10};
 		TimeInternal time2 = {10};
-		subTime(&result, &time1, &time2);
+		ti_sub(&result, &time1, &time2);
 		TEST_ASSERT_EQUAL_INT64(0LL, result.nanoseconds);
 	}
 }
@@ -492,8 +492,8 @@ main(void)
 	RUN_TEST(test_ti_from_timestamp);
 	RUN_TEST(test_ti_from_timespec);
 	RUN_TEST(test_ti_from_timeval);
-	RUN_TEST(test_addTime);
-	RUN_TEST(test_subTime);
+	RUN_TEST(test_ti_add);
+	RUN_TEST(test_ti_sub);
 	RUN_TEST(test_ti_div2);
 	RUN_TEST(test_ti_clear);
 	RUN_TEST(test_ti_is_negative);

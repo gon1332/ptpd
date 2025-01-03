@@ -128,8 +128,8 @@ updateDelay(one_way_delay_filter * mpd_filt, const RunTimeOpts * rtOpts, PtpCloc
 
 
 		/* calc 'slave_to_master_delay' */
-		subTime(&slave_to_master_delay, &ptpClock->delay_req_receive_time,
-			&ptpClock->delay_req_send_time);
+		ti_sub(&slave_to_master_delay, &ptpClock->delay_req_receive_time,
+		       &ptpClock->delay_req_send_time);
 
 		if (checkThreshold && /* If maxDelay is 0 then it's OFF */
 		    ptpClock->offsetFirstUpdated) {
@@ -198,8 +198,8 @@ updateDelay(one_way_delay_filter * mpd_filt, const RunTimeOpts * rtOpts, PtpCloc
 			"Req_SENT:", &ptpClock->delay_req_send_time));
 
 	/* raw value before filtering */
-	subTime(&ptpClock->rawDelaySM, &ptpClock->delay_req_receive_time,
-		&ptpClock->delay_req_send_time);
+		ti_sub(&ptpClock->rawDelaySM, &ptpClock->delay_req_receive_time,
+		       &ptpClock->delay_req_send_time);
 
 #ifdef PTPD_STATISTICS
 
@@ -209,7 +209,7 @@ updateDelay(one_way_delay_filter * mpd_filt, const RunTimeOpts * rtOpts, PtpCloc
 	bob.nanoseconds = -1000000;
 	bob.seconds = 0;
 	if(ptpClock->addOffset) {
-	    	addTime(&ptpClock->rawDelaySM, &ptpClock->rawDelaySM, &bob);
+	    	ti_add(&ptpClock->rawDelaySM, &ptpClock->rawDelaySM, &bob);
 	}
 #endif
 
@@ -240,40 +240,39 @@ updateDelay(one_way_delay_filter * mpd_filt, const RunTimeOpts * rtOpts, PtpCloc
 
 
 #else
-		subTime(&ptpClock->delaySM, &ptpClock->delay_req_receive_time,
-			&ptpClock->delay_req_send_time);
+		ti_sub(&ptpClock->delaySM, &ptpClock->delay_req_receive_time,
+		       &ptpClock->delay_req_send_time);
 #endif
 
 		/* update MeanPathDelay */
-		addTime(&ptpClock->currentDS.meanPathDelay, &ptpClock->delaySM,
-			&ptpClock->delayMS);
+	ti_add(&ptpClock->currentDS.meanPathDelay, &ptpClock->delaySM, &ptpClock->delayMS);
 
-		/* Subtract correctionField */
-		subTime(&ptpClock->currentDS.meanPathDelay, &ptpClock->currentDS.meanPathDelay,
-			correctionField);
+	/* Subtract correctionField */
+	ti_sub(&ptpClock->currentDS.meanPathDelay, &ptpClock->currentDS.meanPathDelay,
+	       correctionField);
 
-		/* Compute one-way delay */
-		ti_div2(&ptpClock->currentDS.meanPathDelay);
+	/* Compute one-way delay */
+	ti_div2(&ptpClock->currentDS.meanPathDelay);
 
-		if (ti_seconds(&ptpClock->currentDS.meanPathDelay)) {
-			DBG("update delay: cannot filter with large OFM, "
-				"clearing filter\n");
-			INFO("Servo: Ignoring delayResp because of large OFM\n");
-			
-			mpd_filt->s_exp = mpd_filt->nsec_prev = 0;
-			/* revert back to previous value */
-			ptpClock->currentDS.meanPathDelay = prev_meanPathDelay;
-			goto finish;
-		}
+	if (ti_seconds(&ptpClock->currentDS.meanPathDelay)) {
+		DBG("update delay: cannot filter with large OFM, "
+		    "clearing filter\n");
+		INFO("Servo: Ignoring delayResp because of large OFM\n");
 
-		if (ti_is_negative(&ptpClock->currentDS.meanPathDelay)) {
-			DBG("update delay: found negative value for OWD, "
-			    "so ignoring this value: %d\n",
-				ptpClock->currentDS.meanPathDelay.nanoseconds);
-			/* revert back to previous value */
-			ptpClock->currentDS.meanPathDelay = prev_meanPathDelay;
-			goto finish;
-		}
+		mpd_filt->s_exp = mpd_filt->nsec_prev = 0;
+		/* revert back to previous value */
+		ptpClock->currentDS.meanPathDelay = prev_meanPathDelay;
+		goto finish;
+	}
+
+	if (ti_is_negative(&ptpClock->currentDS.meanPathDelay)) {
+		DBG("update delay: found negative value for OWD, "
+		    "so ignoring this value: %d\n",
+		    ptpClock->currentDS.meanPathDelay.nanoseconds);
+		/* revert back to previous value */
+		ptpClock->currentDS.meanPathDelay = prev_meanPathDelay;
+		goto finish;
+	}
 
 		/* avoid overflowing filter */
 		s = rtOpts->s;
@@ -349,34 +348,30 @@ updatePeerDelay(one_way_delay_filter * mpd_filt, const RunTimeOpts * rtOpts, Ptp
 
 	if (twoStep) {
 		/* calc 'slave_to_master_delay' */
-		subTime(&ptpClock->pdelayMS,
-			&ptpClock->pdelay_resp_receive_time,
-			&ptpClock->pdelay_resp_send_time);
-		subTime(&ptpClock->pdelaySM,
-			&ptpClock->pdelay_req_receive_time,
-			&ptpClock->pdelay_req_send_time);
+		ti_sub(&ptpClock->pdelayMS, &ptpClock->pdelay_resp_receive_time,
+		       &ptpClock->pdelay_resp_send_time);
+		ti_sub(&ptpClock->pdelaySM, &ptpClock->pdelay_req_receive_time,
+		       &ptpClock->pdelay_req_send_time);
 
 		/* update 'one_way_delay' */
-		addTime(&ptpClock->portDS.peerMeanPathDelay,
-			&ptpClock->pdelayMS,
-			&ptpClock->pdelaySM);
+		ti_add(&ptpClock->portDS.peerMeanPathDelay, &ptpClock->pdelayMS,
+		       &ptpClock->pdelaySM);
 
 		/* Subtract correctionField */
-		subTime(&ptpClock->portDS.peerMeanPathDelay,
-			&ptpClock->portDS.peerMeanPathDelay, correctionField);
+		ti_sub(&ptpClock->portDS.peerMeanPathDelay, &ptpClock->portDS.peerMeanPathDelay,
+		       correctionField);
 
 		/* Compute one-way delay */
 		ti_div2(&ptpClock->portDS.peerMeanPathDelay);
 	} else {
 		/* One step clock */
 
-		subTime(&ptpClock->portDS.peerMeanPathDelay,
-			&ptpClock->pdelay_resp_receive_time,
-			&ptpClock->pdelay_req_send_time);
+		ti_sub(&ptpClock->portDS.peerMeanPathDelay, &ptpClock->pdelay_resp_receive_time,
+		       &ptpClock->pdelay_req_send_time);
 
 		/* Subtract correctionField */
-		subTime(&ptpClock->portDS.peerMeanPathDelay,
-			&ptpClock->portDS.peerMeanPathDelay, correctionField);
+		ti_sub(&ptpClock->portDS.peerMeanPathDelay, &ptpClock->portDS.peerMeanPathDelay,
+		       correctionField);
 
 		/* Compute one-way delay */
 		ti_div2(&ptpClock->portDS.peerMeanPathDelay);
@@ -469,7 +464,7 @@ updateOffset(TimeInternal * send_time, TimeInternal * recv_time,
 
 
 	/* calc 'master_to_slave_delay' */
-	subTime(&master_to_slave_delay, recv_time, send_time);
+	ti_sub(&master_to_slave_delay, recv_time, send_time);
 
 	if (checkThreshold) { /* If maxDelay is 0 then it's OFF */
 		if (ti_seconds(&master_to_slave_delay) && checkThreshold) {
@@ -513,28 +508,29 @@ updateOffset(TimeInternal * send_time, TimeInternal * recv_time,
 	 */
 
 	/* raw value before filtering */
-	subTime(&ptpClock->rawDelayMS, recv_time, send_time);
+	ti_sub(&ptpClock->rawDelayMS, recv_time, send_time);
 
-DBG("UpdateOffset: max delay hit: %d\n", maxDelayHit);
+	DBG("UpdateOffset: max delay hit: %d\n", maxDelayHit);
 
 #ifdef PTPD_STATISTICS
 
 /* testing only: step detection */
-/*
-	TimeInternal bob;
-	bob.nanoseconds = 1000000;
-	bob.seconds = 0;
-	if(ptpClock->addOffset) {
-	    	addTime(&ptpClock->rawDelayMS, &ptpClock->rawDelayMS, &bob);
-	}
-*/
+	/*
+		TimeInternal bob;
+		bob.nanoseconds = 1000000;
+		bob.seconds = 0;
+		if(ptpClock->addOffset) {
+			ti_add(&ptpClock->rawDelayMS, &ptpClock->rawDelayMS, &bob);
+		}
+	*/
 	/* run the delayMS stats filter */
-	if(rtOpts->filterMSOpts.enabled) {
-	    /* FALSE if filter wants to skip the update */
-	    if(!feedDoubleMovingStatFilter(ptpClock->filterMS, timeInternalToDouble(&ptpClock->rawDelayMS))) {
-		    goto finish;
-	    }
-	    ptpClock->rawDelayMS = doubleToTimeInternal(ptpClock->filterMS->output);
+	if (rtOpts->filterMSOpts.enabled) {
+		/* FALSE if filter wants to skip the update */
+		if (!feedDoubleMovingStatFilter(ptpClock->filterMS,
+						timeInternalToDouble(&ptpClock->rawDelayMS))) {
+			goto finish;
+		}
+		ptpClock->rawDelayMS = doubleToTimeInternal(ptpClock->filterMS->output);
 	}
 
 	/* run the delayMS outlier filter */
@@ -554,25 +550,22 @@ DBG("UpdateOffset: max delay hit: %d\n", maxDelayHit);
 	}
 #else
 	/* Used just for End to End mode. */
-	subTime(&ptpClock->delayMS, recv_time, send_time);
+	ti_sub(&ptpClock->delayMS, recv_time, send_time);
 #endif
 
 	/* Take care of correctionField */
-	subTime(&ptpClock->delayMS,
-		&ptpClock->delayMS, correctionField);
+	ti_sub(&ptpClock->delayMS, &ptpClock->delayMS, correctionField);
 
 	/* update 'offsetFromMaster' */
 	if (ptpClock->portDS.delayMechanism == P2P) {
-		subTime(&ptpClock->currentDS.offsetFromMaster,
-			&ptpClock->delayMS,
-			&ptpClock->portDS.peerMeanPathDelay);
-	/* (End to End mode or disabled - if disabled, meanpath delay is zero) */
+		ti_sub(&ptpClock->currentDS.offsetFromMaster, &ptpClock->delayMS,
+		       &ptpClock->portDS.peerMeanPathDelay);
+		/* (End to End mode or disabled - if disabled, meanpath delay is zero) */
 	} else if (ptpClock->portDS.delayMechanism == E2E ||
 	    ptpClock->portDS.delayMechanism == DELAY_DISABLED ) {
 
-		subTime(&ptpClock->currentDS.offsetFromMaster,
-			&ptpClock->delayMS,
-			&ptpClock->currentDS.meanPathDelay);
+		ti_sub(&ptpClock->currentDS.offsetFromMaster, &ptpClock->delayMS,
+		       &ptpClock->currentDS.meanPathDelay);
 	}
 
 	if (ti_seconds(&ptpClock->currentDS.offsetFromMaster)) {
@@ -601,8 +594,8 @@ DBG("UpdateOffset: max delay hit: %d\n", maxDelayHit);
 	ptpClock->currentDS.offsetFromMaster.nanoseconds = ofm_filt->y;
 
 	/* Apply the offset shift */
-	subTime(&ptpClock->currentDS.offsetFromMaster, &ptpClock->currentDS.offsetFromMaster,
-	&rtOpts->ofmShift);
+	ti_sub(&ptpClock->currentDS.offsetFromMaster, &ptpClock->currentDS.offsetFromMaster,
+	       &rtOpts->ofmShift);
 
 	DBGV("offset filter %d\n", ofm_filt->y);
 
@@ -674,7 +667,7 @@ stepClock(const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	TimeInternal oldTime, newTime;
 	/*No need to reset the frequency offset: if we're far off, it will quickly get back to a high value */
 	getTime(&oldTime);
-	subTime(&newTime, &oldTime, &ptpClock->currentDS.offsetFromMaster);
+	ti_sub(&newTime, &oldTime, &ptpClock->currentDS.offsetFromMaster);
 
 	setTime(&newTime);
 
@@ -1054,7 +1047,7 @@ runPIservo(PIservo* servo, const Integer32 input)
 		if (ti_is_zero(&servo->lastUpdate)) {
 			dt = servo->dT;
 		} else {
-			subTime(&delta, &now, &servo->lastUpdate);
+			ti_sub(&delta, &now, &servo->lastUpdate);
 			dt = timeInternalToDouble(&delta);
 		}
 

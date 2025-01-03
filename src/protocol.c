@@ -1207,7 +1207,7 @@ timestampCorrection(const RunTimeOpts * rtOpts, PtpClock *ptpClock, TimeInternal
 	}
 
 	if(ptpClock->portDS.portState == PTP_SLAVE && ptpClock->leapSecondPending && !ptpClock->leapSecondInProgress) {
-	    addTime(timeStamp, timeStamp, &fudge);
+		ti_add(timeStamp, timeStamp, &fudge);
 	}
 
 }
@@ -1354,7 +1354,7 @@ processMessage(RunTimeOpts* rtOpts, PtpClock* ptpClock, TimeInternal* timeStamp,
      *  back and the time stamp seems reasonable
      */
     if (!isFromSelf && ti_seconds(timeStamp) > 0)
-	    subTime(timeStamp, timeStamp, &rtOpts->inboundLatency);
+	    ti_sub(timeStamp, timeStamp, &rtOpts->inboundLatency);
 
     DBG("      ==> %s message received, sequence %d\n", getMessageTypeName(ptpClock->msgTmpHeader.messageType),
 							ptpClock->msgTmpHeader.sequenceId);
@@ -1983,7 +1983,7 @@ static void
 processSyncFromSelf(const TimeInternal * tint, const RunTimeOpts * rtOpts, PtpClock * ptpClock, Integer32 dst, const UInteger16 sequenceId) {
 	TimeInternal timestamp;
 	/*Add latency*/
-	addTime(&timestamp, tint, &rtOpts->outboundLatency);
+	ti_add(&timestamp, tint, &rtOpts->outboundLatency);
 	/* Issue follow-up CORRESPONDING TO THIS SYNC */
 	issueFollowup(&timestamp, rtOpts, ptpClock, dst, sequenceId);
 }
@@ -2044,8 +2044,8 @@ handleFollowUp(const MsgHeader *header, ssize_t length,
 						&preciseOriginTimestamp);
 					ti_from_integer64(ptpClock->msgTmpHeader.correctionField,
 							  &correctionField);
-					addTime(&correctionField,&correctionField,
-						&ptpClock->lastSyncCorrectionField);
+					ti_add(&correctionField, &correctionField,
+					       &ptpClock->lastSyncCorrectionField);
 
 					/*
 					send_time = preciseOriginTimestamp (received inside followup)
@@ -2217,10 +2217,9 @@ processDelayReqFromSelf(const TimeInternal * tint, const RunTimeOpts * rtOpts, P
 	ptpClock->delay_req_send_time = *tint;
 
 	/*Add latency*/
-	addTime(&ptpClock->delay_req_send_time,
-		&ptpClock->delay_req_send_time,
-		&rtOpts->outboundLatency);
-	
+	ti_add(&ptpClock->delay_req_send_time, &ptpClock->delay_req_send_time,
+	       &rtOpts->outboundLatency);
+
 	DBGV("processDelayReqFromSelf: %s %d\n",
 	    dump_TimeInternal(&ptpClock->delay_req_send_time),
 	    rtOpts->outboundLatency);
@@ -2475,9 +2474,8 @@ processPdelayReqFromSelf(const TimeInternal * tint, const RunTimeOpts * rtOpts, 
 	ptpClock->pdelay_req_send_time = *tint;
 
 	/*Add latency*/
-	addTime(&ptpClock->pdelay_req_send_time,
-		&ptpClock->pdelay_req_send_time,
-		&rtOpts->outboundLatency);
+	ti_add(&ptpClock->pdelay_req_send_time, &ptpClock->pdelay_req_send_time,
+	       &rtOpts->outboundLatency);
 }
 
 static void
@@ -2640,8 +2638,8 @@ static void
 processPdelayRespFromSelf(const TimeInternal * tint, const RunTimeOpts * rtOpts, PtpClock * ptpClock, Integer32 dst, const UInteger16 sequenceId)
 {
 	TimeInternal timestamp;
-	
-	addTime(&timestamp, tint, &rtOpts->outboundLatency);
+
+	ti_add(&timestamp, tint, &rtOpts->outboundLatency);
 
 	issuePdelayRespFollowUp(&timestamp, &ptpClock->PdelayReqHeader, dst,
 		rtOpts, ptpClock, sequenceId);
@@ -2692,8 +2690,8 @@ handlePdelayRespFollowUp(const MsgHeader *header, ssize_t length,
 				ptpClock->pdelay_resp_send_time = responseOriginTimestamp;
 				ti_from_integer64(ptpClock->msgTmpHeader.correctionField,
 						  &correctionField);
-				addTime(&correctionField,&correctionField,
-					&ptpClock->lastPdelayRespCorrectionField);
+				ti_add(&correctionField, &correctionField,
+				       &ptpClock->lastPdelayRespCorrectionField);
 				updatePeerDelay (&ptpClock->mpd_filt,
 						 rtOpts, ptpClock,
 						 &correctionField,TRUE);
