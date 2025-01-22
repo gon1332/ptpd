@@ -1716,8 +1716,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 		time->nanoseconds =
 			pkt_header->ts.tv_sec * 1000000000 + pkt_header->ts.tv_usec * 1000;
 		timestampValid = TRUE;
-		DBGV("netRecvEvent: kernel PCAP recv time stamp %lfs\n",
-		     ti_to_double(time));
+		DBGV("netRecvEvent: kernel PCAP recv time stamp %lfs\n", ti_to_double(time));
 		fflush(NULL);
 		ret = pkt_header->caplen - netPath->headerOffset;
 	}

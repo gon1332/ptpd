@@ -215,15 +215,17 @@ updateDelay(one_way_delay_filter * mpd_filt, const RunTimeOpts * rtOpts, PtpCloc
 
 	/* run the delayMS stats filter */
 	if(rtOpts->filterSMOpts.enabled) {
-	    if(!feedDoubleMovingStatFilter(ptpClock->filterSM, ti_to_double(&ptpClock->rawDelaySM))) {
-		    return;
-	    }
-	    ptpClock->rawDelaySM = ti_from_double(ptpClock->filterSM->output);
+		if (!feedDoubleMovingStatFilter(ptpClock->filterSM,
+						ti_to_double(&ptpClock->rawDelaySM))) {
+			return;
+		}
+		ptpClock->rawDelaySM = ti_from_double(ptpClock->filterSM->output);
 	}
 
 	/* run the delaySM outlier filter */
 	if(!rtOpts->noAdjust && ptpClock->oFilterSM.config.enabled && (ptpClock->oFilterSM.config.alwaysFilter || !ptpClock->servo.runningMaxOutput) ) {
-		if(ptpClock->oFilterSM.filter(&ptpClock->oFilterSM, ti_to_double(&ptpClock->rawDelaySM))) {
+		if (ptpClock->oFilterSM.filter(&ptpClock->oFilterSM,
+					       ti_to_double(&ptpClock->rawDelaySM))) {
 			ptpClock->delaySM = ti_from_double(ptpClock->oFilterSM.output);
 		} else {
 			ptpClock->counters.delaySMOutliersFound++;
@@ -313,17 +315,25 @@ DBG("UpdateDelay: Max delay hit: %d\n", maxDelayHit);
 #ifdef PTPD_STATISTICS
 	/* don't churn on stats containers with the old value if we've discarded an outlier */
 	if(!(ptpClock->oFilterSM.config.enabled && ptpClock->oFilterSM.config.discard && ptpClock->oFilterSM.lastOutlier)) {
-		feedDoublePermanentStdDev(&ptpClock->slaveStats.mpdStats, ti_to_double(&ptpClock->currentDS.meanPathDelay));
-		feedDoublePermanentMedian(&ptpClock->slaveStats.mpdMedianContainer, ti_to_double(&ptpClock->currentDS.meanPathDelay));
+		feedDoublePermanentStdDev(&ptpClock->slaveStats.mpdStats,
+					  ti_to_double(&ptpClock->currentDS.meanPathDelay));
+		feedDoublePermanentMedian(&ptpClock->slaveStats.mpdMedianContainer,
+					  ti_to_double(&ptpClock->currentDS.meanPathDelay));
 		if(!ptpClock->slaveStats.mpdStatsUpdated) {
-			if(ti_to_double(&ptpClock->currentDS.meanPathDelay) != 0.0){
-			ptpClock->slaveStats.mpdMax = ti_to_double(&ptpClock->currentDS.meanPathDelay);
-			ptpClock->slaveStats.mpdMin = ti_to_double(&ptpClock->currentDS.meanPathDelay);
-			ptpClock->slaveStats.mpdStatsUpdated = TRUE;
+			if (ti_to_double(&ptpClock->currentDS.meanPathDelay) != 0.0) {
+				ptpClock->slaveStats.mpdMax =
+					ti_to_double(&ptpClock->currentDS.meanPathDelay);
+				ptpClock->slaveStats.mpdMin =
+					ti_to_double(&ptpClock->currentDS.meanPathDelay);
+				ptpClock->slaveStats.mpdStatsUpdated = TRUE;
 			}
 		} else {
-		    ptpClock->slaveStats.mpdMax = max(ptpClock->slaveStats.mpdMax, ti_to_double(&ptpClock->currentDS.meanPathDelay));
-		    ptpClock->slaveStats.mpdMin = min(ptpClock->slaveStats.mpdMin, ti_to_double(&ptpClock->currentDS.meanPathDelay));
+			ptpClock->slaveStats.mpdMax =
+				max(ptpClock->slaveStats.mpdMax,
+				    ti_to_double(&ptpClock->currentDS.meanPathDelay));
+			ptpClock->slaveStats.mpdMin =
+				min(ptpClock->slaveStats.mpdMin,
+				    ti_to_double(&ptpClock->currentDS.meanPathDelay));
 		}
 	}
 #endif /* PTPD_STATISTICS */
@@ -535,7 +545,8 @@ updateOffset(TimeInternal * send_time, TimeInternal * recv_time,
 
 	/* run the delayMS outlier filter */
 	if(!rtOpts->noAdjust && ptpClock->oFilterMS.config.enabled && (ptpClock->oFilterMS.config.alwaysFilter || !ptpClock->servo.runningMaxOutput)) {
-		if(ptpClock->oFilterMS.filter(&ptpClock->oFilterMS, ti_to_double(&ptpClock->rawDelayMS))) {
+		if (ptpClock->oFilterMS.filter(&ptpClock->oFilterMS,
+					       ti_to_double(&ptpClock->rawDelayMS))) {
 			ptpClock->delayMS = ti_from_double(ptpClock->oFilterMS.output);
 		} else {
 			ptpClock->counters.delayMSOutliersFound++;
@@ -608,17 +619,25 @@ updateOffset(TimeInternal * send_time, TimeInternal * recv_time,
 
 #ifdef PTPD_STATISTICS
 	if(!ptpClock->oFilterMS.lastOutlier) {
-            feedDoublePermanentStdDev(&ptpClock->slaveStats.ofmStats, ti_to_double(&ptpClock->currentDS.offsetFromMaster));
-            feedDoublePermanentMedian(&ptpClock->slaveStats.ofmMedianContainer, ti_to_double(&ptpClock->currentDS.offsetFromMaster));
+		feedDoublePermanentStdDev(&ptpClock->slaveStats.ofmStats,
+					  ti_to_double(&ptpClock->currentDS.offsetFromMaster));
+		feedDoublePermanentMedian(&ptpClock->slaveStats.ofmMedianContainer,
+					  ti_to_double(&ptpClock->currentDS.offsetFromMaster));
 		if(!ptpClock->slaveStats.ofmStatsUpdated) {
-			if(ti_to_double(&ptpClock->currentDS.offsetFromMaster) != 0.0){
-			ptpClock->slaveStats.ofmMax = ti_to_double(&ptpClock->currentDS.offsetFromMaster);
-			ptpClock->slaveStats.ofmMin = ti_to_double(&ptpClock->currentDS.offsetFromMaster);
-			ptpClock->slaveStats.ofmStatsUpdated = TRUE;
+			if (ti_to_double(&ptpClock->currentDS.offsetFromMaster) != 0.0) {
+				ptpClock->slaveStats.ofmMax =
+					ti_to_double(&ptpClock->currentDS.offsetFromMaster);
+				ptpClock->slaveStats.ofmMin =
+					ti_to_double(&ptpClock->currentDS.offsetFromMaster);
+				ptpClock->slaveStats.ofmStatsUpdated = TRUE;
 			}
 		} else {
-		    ptpClock->slaveStats.ofmMax = max(ptpClock->slaveStats.ofmMax, ti_to_double(&ptpClock->currentDS.offsetFromMaster));
-		    ptpClock->slaveStats.ofmMin = min(ptpClock->slaveStats.ofmMin, ti_to_double(&ptpClock->currentDS.offsetFromMaster));
+			ptpClock->slaveStats.ofmMax =
+				max(ptpClock->slaveStats.ofmMax,
+				    ti_to_double(&ptpClock->currentDS.offsetFromMaster));
+			ptpClock->slaveStats.ofmMin =
+				min(ptpClock->slaveStats.ofmMin,
+				    ti_to_double(&ptpClock->currentDS.offsetFromMaster));
 		}
 
 
@@ -822,8 +841,7 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	     ti_seconds(&ptpClock->currentDS.offsetFromMaster))) {
 		INFO("Offset %lf greater than "
 		     "administratively set maximum %d\n. Will not update clock",
-		     ti_to_double(&ptpClock->currentDS.offsetFromMaster),
-		     rtOpts->maxOffset);
+		     ti_to_double(&ptpClock->currentDS.offsetFromMaster), rtOpts->maxOffset);
 		return;
 	}
 
@@ -832,8 +850,8 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 		if(!rtOpts->enablePanicMode) {
 			if (!rtOpts->noResetClock)
-				CRITICAL("Offset above 1 second (%.09f s). Clock will step.\n", 
-					    ti_to_double(&ptpClock->currentDS.offsetFromMaster));
+				CRITICAL("Offset above 1 second (%.09f s). Clock will step.\n",
+					 ti_to_double(&ptpClock->currentDS.offsetFromMaster));
 			ptpClock->clockControl.stepRequired = TRUE;
 			ptpClock->clockControl.updateOK = TRUE;
 			ptpClock->pastStartup = TRUE;
@@ -872,8 +890,9 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			return;
 		}
 
-		CRITICAL("Offset above 1 second (%.09f s)  - entering panic mode. Clock updates paused.\n",
-			    ti_to_double(&ptpClock->currentDS.offsetFromMaster));
+		CRITICAL("Offset above 1 second (%.09f s)  - entering panic mode. Clock updates "
+			 "paused.\n",
+			 ti_to_double(&ptpClock->currentDS.offsetFromMaster));
 		ptpClock->panicMode = TRUE;
 		ptpClock->panicModeTimeLeft = 6 * rtOpts->panicModeDuration;
 		timerStart(&ptpClock->timers[PANIC_MODE_TIMER], 10);

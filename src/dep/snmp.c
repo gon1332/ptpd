@@ -522,7 +522,8 @@ snmpClockDSTable(SNMP_SIGNATURE) {
 		return SNMP_TIMEINTERNAL(snmpPtpClock->currentDS.meanPathDelay);
 	/* PTPd: offsets as string */
 	case PTPBASE_CLOCK_CURRENT_DS_OFFSET_FROM_MASTER_STRING:
-		snprintf(tmpStr, 64, "%.09f", ti_to_double(&snmpPtpClock->currentDS.offsetFromMaster));
+		snprintf(tmpStr, 64, "%.09f",
+			 ti_to_double(&snmpPtpClock->currentDS.offsetFromMaster));
 		return SNMP_OCTETSTR(&tmpStr, strlen(tmpStr));
 	case PTPBASE_CLOCK_CURRENT_DS_MEAN_PATH_DELAY_STRING:
 		snprintf(tmpStr, 64, "%.09f", ti_to_double(&snmpPtpClock->currentDS.meanPathDelay));
@@ -684,7 +685,8 @@ snmpClockPortTable(SNMP_SIGNATURE) {
 	case PTPBASE_CLOCK_PORT_DS_PTP_VERSION:
 		return SNMP_INTEGER(snmpPtpClock->portDS.versionNumber);
 	case PTPBASE_CLOCK_PORT_DS_PEER_MEAN_PATH_DELAY_STRING:
-		snprintf(tmpStr, 64, "%.09f", ti_to_double(&snmpPtpClock->portDS.peerMeanPathDelay));
+		snprintf(tmpStr, 64, "%.09f",
+			 ti_to_double(&snmpPtpClock->portDS.peerMeanPathDelay));
 		return SNMP_OCTETSTR(&tmpStr, strlen(tmpStr));
 	case PTPBASE_CLOCK_PORT_DS_LAST_MISMATCHED_DOMAIN:
 		return SNMP_INTEGER(snmpPtpClock->portDS.lastMismatchedDomain);
@@ -1143,7 +1145,8 @@ snmpSlaveOfmStatsTable(SNMP_SIGNATURE) {
 	case PTPBASE_SLAVE_OFM_STATS_CURRENT_VALUE:
 		return SNMP_TIMEINTERNAL(snmpPtpClock->currentDS.offsetFromMaster);
 	case PTPBASE_SLAVE_OFM_STATS_CURRENT_VALUE_STRING:
-		snprintf(tmpStr, 64, "%.09f", ti_to_double(&snmpPtpClock->currentDS.offsetFromMaster));
+		snprintf(tmpStr, 64, "%.09f",
+			 ti_to_double(&snmpPtpClock->currentDS.offsetFromMaster));
 		return SNMP_OCTETSTR(&tmpStr, strlen(tmpStr));
 #ifdef PTPD_STATISTICS
 	case PTPBASE_SLAVE_OFM_STATS_PERIOD_SECONDS:
@@ -1350,13 +1353,13 @@ snmpPtpdSpecificDataTable(SNMP_SIGNATURE) {
 	    case PTPBASE_PTPD_SPECIFIC_DATA_RAW_DELAYMS:
 		return SNMP_TIMEINTERNAL(snmpPtpClock->rawDelayMS);
 	    case PTPBASE_PTPD_SPECIFIC_DATA_RAW_DELAYMS_STRING:
-		snprintf(tmpStr, 64, "%.09f", ti_to_double(&snmpPtpClock->rawDelayMS));
-		return SNMP_OCTETSTR(&tmpStr, strlen(tmpStr));
+		    snprintf(tmpStr, 64, "%.09f", ti_to_double(&snmpPtpClock->rawDelayMS));
+		    return SNMP_OCTETSTR(&tmpStr, strlen(tmpStr));
 	    case PTPBASE_PTPD_SPECIFIC_DATA_RAW_DELAYSM:
 		return SNMP_TIMEINTERNAL(snmpPtpClock->rawDelaySM);
 	    case PTPBASE_PTPD_SPECIFIC_DATA_RAW_DELAYSM_STRING:
-		snprintf(tmpStr, 64, "%.09f", ti_to_double(&snmpPtpClock->rawDelaySM));
-		return SNMP_OCTETSTR(&tmpStr, strlen(tmpStr));
+		    snprintf(tmpStr, 64, "%.09f", ti_to_double(&snmpPtpClock->rawDelaySM));
+		    return SNMP_OCTETSTR(&tmpStr, strlen(tmpStr));
 	}
 #endif
 
@@ -1832,7 +1835,8 @@ populateNotif (netsnmp_variable_list** varBinds, int eventType, PtpEventData *ev
 			ofmNum.low = flip64(tmpi64) & 0xffffffff;
 			ofmNum.high = flip64(tmpi64) >> 32;
 
-			tmpsnprintf(ofmStr, 64, "%.09f", ti_to_double(&eventData->currentDS.offsetFromMaster));
+			tmpsnprintf(ofmStr, 64, "%.09f",
+				    ti_to_double(&eventData->currentDS.offsetFromMaster));
 
 			oid ofmOid[] = { PTPBASE_MIB_OID, 1, 2, 1, 1, 5, PTPBASE_MIB_INDEX3 };
 			oid ofmStringOid[] = { PTPBASE_MIB_OID, 1, 2, 1, 1, 8, PTPBASE_MIB_INDEX3 };
@@ -1919,7 +1923,8 @@ populateNotif (netsnmp_variable_list** varBinds, int eventType, PtpEventData *ev
 			ofmNum.low = flip64(tmpi64) & 0xffffffff;
 			ofmNum.high = flip64(tmpi64) >> 32;
 
-			tmpsnprintf(ofmStr, 64, "%.09f", ti_to_double(&eventData->currentDS.offsetFromMaster));
+			tmpsnprintf(ofmStr, 64, "%.09f",
+				    ti_to_double(&eventData->currentDS.offsetFromMaster));
 
 			oid ofmOid[] = { PTPBASE_MIB_OID, 1, 2, 1, 1, 5, PTPBASE_MIB_INDEX3 };
 			oid ofmStringOid[] = { PTPBASE_MIB_OID, 1, 2, 1, 1, 8, PTPBASE_MIB_INDEX3 };
