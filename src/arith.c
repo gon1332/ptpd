@@ -33,14 +33,17 @@
  */
 
 #include "ptpd.h"
+#include "time_ops.h"
 
+/**
+ * @note Timestamp is fresh if it is at most 1 millisecond old.
+ */
 int
 check_timestamp_is_fresh(const TimeInternal *timeA)
 {
 	TimeInternal timeB;
 	getTime(&timeB);
-
-	return check_timestamp_is_fresh2(timeA, &timeB);
+	return ti_is_close(timeA, &timeB, 1000000);
 }
 
 double
