@@ -1202,7 +1202,7 @@ timestampCorrection(const RunTimeOpts * rtOpts, PtpClock *ptpClock, TimeInternal
 		if(ptpClock->timePropertiesDS.leap59) {
 		    ptpClock->leapSmearFudge *= -1;
 		}
-		fudge = doubleToTimeInternal(ptpClock->leapSmearFudge);
+		fudge = ti_from_double(ptpClock->leapSmearFudge);
 	    }
 	}
 

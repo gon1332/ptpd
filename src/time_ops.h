@@ -143,30 +143,22 @@ void ti_abs(TimeInternal *t);
  */
 int ti_is_close(const TimeInternal *x, const TimeInternal *y, int error_ns);
 
-//// NOT UNIT TESTED YET -----v
+/** Converts TimeInternal to double
+ * @param[in] from Time in Interval
+ * @returns the equivalent in double
+ */
+double ti_to_double(const TimeInternal *from);
 
-int check_timestamp_is_fresh2(const TimeInternal *timeA, const TimeInternal *timeB);
-
-double timeInternalToDouble(const TimeInternal *p);
-
-TimeInternal doubleToTimeInternal(double d);
+/** Converts double to TimeInternal
+ * @param[in] from Time in seconds
+ * @returns the equivalent in TimeInterval
+ */
+TimeInternal ti_from_double(double from);
 
 /**
  * @param[in] t The time to test
  * @returns the amount of seconds contained in t
  */
 int32_t ti_seconds(const TimeInternal *t);
-
-#if 0
-int check_timestamp_is_fresh(const TimeInternal * timeA);
-
-double secondsToMidnight(void);
-
-double getPauseAfterMidnight(Integer8 announceInterval, int pausePeriod);
-
-/* FNV-1 hash, 32-bit, optional modulo limiter */
-uint32_t fnvHash(void *input, size_t len, int modulo);
-
-#endif /* 0 */
 
 #endif /* TIME_OPS_H_ */

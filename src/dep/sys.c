@@ -130,7 +130,7 @@ snprint_TimeInternal(char *s, int max_len, const TimeInternal * p)
 	/* always print either a space, or the leading "-". This makes the stat files columns-aligned */
 	len += snprintf(&s[len], max_len - len, "%c", ti_is_negative(p) ? '-' : ' ');
 
-	len += snprintf(&s[len], max_len - len, "%lf", fabs(timeInternalToDouble(p)));
+	len += snprintf(&s[len], max_len - len, "%lf", fabs(ti_to_double(p)));
 
 	return len;
 }
@@ -743,7 +743,7 @@ logStatistics(PtpClock * ptpClock)
 	if (rtOpts.statisticsTimestamp == TIMESTAMP_UNIX ||
 	    rtOpts.statisticsTimestamp == TIMESTAMP_BOTH) {
 		len += snprintf(sbuf + len, sizeof(sbuf) - len, "%lf, %s,",
-				timeInternalToDouble(&now), /* Timestamp */
+				ti_to_double(&now), /* Timestamp */
 				translatePortState(ptpClock)); /* State */
 	}
 
@@ -1618,7 +1618,7 @@ void setRtc(TimeInternal *timeToSet)
 		return;
 	}
 
-	seconds = (time_t)round(timeInternalToDouble(timeToSet));
+	seconds = (time_t)round(ti_to_double(timeToSet));
 	tmTime = gmtime(&seconds);
 
 	DBGV("Set RTC from %d seconds to y: %d m: %d d: %d \n",timeToSet->seconds,tmTime->tm_year,tmTime->tm_mon,tmTime->tm_mday);

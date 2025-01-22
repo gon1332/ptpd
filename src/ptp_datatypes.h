@@ -45,12 +45,7 @@
  * If the time is negative, both fields should be negative.
  */
 typedef struct {
-#ifdef NEW_TIME_IMPLEMENTATION
 	int64_t nanoseconds;
-#else
-	Integer32 seconds;
-	Integer32 nanoseconds;
-#endif
 } TimeInternal;
 
 /**

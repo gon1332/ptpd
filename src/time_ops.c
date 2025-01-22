@@ -144,27 +144,16 @@ ti_is_close(const TimeInternal *x, const TimeInternal *y, int error_ns)
 	return ti_cmp(&diff, &err) <= 0;
 }
 
-int
-check_timestamp_is_fresh2(const TimeInternal *timeA, const TimeInternal *timeB)
-{
-	int ret;
-
-	// maximum 1 millisecond offset
-	ret = ti_is_close(timeA, timeB, 1000000);
-	//	DBG2("check_timestamp_is_fresh: %d\n ", ret);
-	return ret;
-}
-
 double
-timeInternalToDouble(const TimeInternal *p)
+ti_to_double(const TimeInternal *from)
 {
-	return ((double)p->nanoseconds) / NSEC_IN_SEC;
+	return ((double)from->nanoseconds) / NSEC_IN_SEC;
 }
 
 TimeInternal
-doubleToTimeInternal(double d)
+ti_from_double(double from)
 {
-	TimeInternal t = {d * NSEC_IN_SEC};
+	const TimeInternal t = {from * NSEC_IN_SEC};
 	return t;
 }
 

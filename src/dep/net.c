@@ -1621,7 +1621,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 					DBG("rcvevent: SO_TIMESTAMP%s %s time stamp: %lfs\n",
 					    netPath->txTimestampFailure ? "NS" : "ING",
 					    (flags & MSG_ERRQUEUE) ? "(TX)" : "(RX)",
-					    timeInternalToDouble(time));
+					    ti_to_double(time));
 					break;
 				}
 #elif defined(SO_TIMESTAMPNS)
@@ -1630,7 +1630,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 					ti_from_timespec(ts, time);
 					timestampValid = TRUE;
 					DBGV("kernel NANO recv time stamp %lfs\n",
-					     timeInternalToDouble(time));
+					     ti_to_double(time));
 					break;
 				}
 #elif defined(SO_BINTIME)
@@ -1640,7 +1640,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 					ti_from_timespec(&ts, time);
 					timestampValid = TRUE;
 					DBGV("kernel NANO recv time stamp %lfs\n",
-					     timeInternalToDouble(time));
+					     ti_to_double(time));
 					break;
 				}
 #endif
@@ -1651,7 +1651,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 					ti_from_timeval(tv, time);
 					timestampValid = TRUE;
 					DBGV("kernel MICRO recv time stamp %lfs\n", ,
-					     timeInternalToDouble(time));
+					     ti_to_double(time));
 				}
 #endif
 			 }
@@ -1717,7 +1717,7 @@ netRecvEvent(Octet * buf, TimeInternal * time, NetPath * netPath, int flags)
 			pkt_header->ts.tv_sec * 1000000000 + pkt_header->ts.tv_usec * 1000;
 		timestampValid = TRUE;
 		DBGV("netRecvEvent: kernel PCAP recv time stamp %lfs\n",
-		     timeInternalToDouble(time));
+		     ti_to_double(time));
 		fflush(NULL);
 		ret = pkt_header->caplen - netPath->headerOffset;
 	}

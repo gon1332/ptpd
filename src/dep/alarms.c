@@ -62,26 +62,26 @@ getAlarmMessage(char *out, int count, AlarmEntry *alarm)
 	case ALRM_OFM_THRESHOLD:
 	    if(alarm->state == ALARM_UNSET) {
 		snprintf(out, count, ": Offset from master is now %.09f s, threshold is %d ns",
-			timeInternalToDouble(&alarm->eventData.currentDS.offsetFromMaster),
+			ti_to_double(&alarm->eventData.currentDS.offsetFromMaster),
 			alarm->eventData.ofmAlarmThreshold);
 		return;
 	    }
 	    snprintf(out, count, ": Offset from master is %.09f s, threshold is %d ns",
-			timeInternalToDouble(&alarm->eventData.currentDS.offsetFromMaster),
+			ti_to_double(&alarm->eventData.currentDS.offsetFromMaster),
 			alarm->eventData.ofmAlarmThreshold);
 	    return;
 	case ALRM_OFM_SECONDS:
 	    if(alarm->state == ALARM_UNSET) {
 		    snprintf(out, count, ": Offset from master is now %.09f s, below 1 second",
-			timeInternalToDouble(&alarm->eventData.currentDS.offsetFromMaster));
+			ti_to_double(&alarm->eventData.currentDS.offsetFromMaster));
 		return;
 	    }
 	    snprintf(out, count, ": Offset from master is %.09f s, above 1 second", 
-			timeInternalToDouble(&alarm->eventData.currentDS.offsetFromMaster));
+			ti_to_double(&alarm->eventData.currentDS.offsetFromMaster));
 	    return;
 	case ALRM_CLOCK_STEP:
 	    snprintf(out, count, ": Clock stepped by %.09f s",
-			timeInternalToDouble(&alarm->eventData.currentDS.offsetFromMaster));
+			ti_to_double(&alarm->eventData.currentDS.offsetFromMaster));
 	    return;
 	case ALRM_NO_SYNC:
 	    if(alarm->state == ALARM_UNSET) {

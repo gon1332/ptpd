@@ -138,18 +138,18 @@ updateDelay(one_way_delay_filter * mpd_filt, const RunTimeOpts * rtOpts, PtpCloc
 			    (llabs(slave_to_master_delay.nanoseconds) > rtOpts->maxDelay)) {
 				INFO("updateDelay aborted, "
 				     "delay (%lf sec) is negative\n",
-				     timeInternalToDouble(&slave_to_master_delay));
+				     ti_to_double(&slave_to_master_delay));
 				INFO("send (%lf sec)\n",
-				     timeInternalToDouble(&ptpClock->delay_req_send_time));
+				     ti_to_double(&ptpClock->delay_req_send_time));
 				INFO("recv (%lf sec)\n",
-				     timeInternalToDouble(&ptpClock->delay_req_receive_time));
+				     ti_to_double(&ptpClock->delay_req_receive_time));
 				goto finish;
 			}
 
 			if (ti_seconds(&slave_to_master_delay) && checkThreshold) {
 				INFO("updateDelay aborted, slave to master delay %lf greater than "
 				     "1 second\n",
-				     timeInternalToDouble(&slave_to_master_delay));
+				     ti_to_double(&slave_to_master_delay));
 				if (rtOpts->displayPackets)
 					msgDump(ptpClock);
 				goto finish;
@@ -215,16 +215,16 @@ updateDelay(one_way_delay_filter * mpd_filt, const RunTimeOpts * rtOpts, PtpCloc
 
 	/* run the delayMS stats filter */
 	if(rtOpts->filterSMOpts.enabled) {
-	    if(!feedDoubleMovingStatFilter(ptpClock->filterSM, timeInternalToDouble(&ptpClock->rawDelaySM))) {
+	    if(!feedDoubleMovingStatFilter(ptpClock->filterSM, ti_to_double(&ptpClock->rawDelaySM))) {
 		    return;
 	    }
-	    ptpClock->rawDelaySM = doubleToTimeInternal(ptpClock->filterSM->output);
+	    ptpClock->rawDelaySM = ti_from_double(ptpClock->filterSM->output);
 	}
 
 	/* run the delaySM outlier filter */
 	if(!rtOpts->noAdjust && ptpClock->oFilterSM.config.enabled && (ptpClock->oFilterSM.config.alwaysFilter || !ptpClock->servo.runningMaxOutput) ) {
-		if(ptpClock->oFilterSM.filter(&ptpClock->oFilterSM, timeInternalToDouble(&ptpClock->rawDelaySM))) {
-			ptpClock->delaySM = doubleToTimeInternal(ptpClock->oFilterSM.output);
+		if(ptpClock->oFilterSM.filter(&ptpClock->oFilterSM, ti_to_double(&ptpClock->rawDelaySM))) {
+			ptpClock->delaySM = ti_from_double(ptpClock->oFilterSM.output);
 		} else {
 			ptpClock->counters.delaySMOutliersFound++;
 			/* If the outlier filter has blocked the sample, "reverse" the last maxDelay action */
@@ -313,17 +313,17 @@ DBG("UpdateDelay: Max delay hit: %d\n", maxDelayHit);
 #ifdef PTPD_STATISTICS
 	/* don't churn on stats containers with the old value if we've discarded an outlier */
 	if(!(ptpClock->oFilterSM.config.enabled && ptpClock->oFilterSM.config.discard && ptpClock->oFilterSM.lastOutlier)) {
-		feedDoublePermanentStdDev(&ptpClock->slaveStats.mpdStats, timeInternalToDouble(&ptpClock->currentDS.meanPathDelay));
-		feedDoublePermanentMedian(&ptpClock->slaveStats.mpdMedianContainer, timeInternalToDouble(&ptpClock->currentDS.meanPathDelay));
+		feedDoublePermanentStdDev(&ptpClock->slaveStats.mpdStats, ti_to_double(&ptpClock->currentDS.meanPathDelay));
+		feedDoublePermanentMedian(&ptpClock->slaveStats.mpdMedianContainer, ti_to_double(&ptpClock->currentDS.meanPathDelay));
 		if(!ptpClock->slaveStats.mpdStatsUpdated) {
-			if(timeInternalToDouble(&ptpClock->currentDS.meanPathDelay) != 0.0){
-			ptpClock->slaveStats.mpdMax = timeInternalToDouble(&ptpClock->currentDS.meanPathDelay);
-			ptpClock->slaveStats.mpdMin = timeInternalToDouble(&ptpClock->currentDS.meanPathDelay);
+			if(ti_to_double(&ptpClock->currentDS.meanPathDelay) != 0.0){
+			ptpClock->slaveStats.mpdMax = ti_to_double(&ptpClock->currentDS.meanPathDelay);
+			ptpClock->slaveStats.mpdMin = ti_to_double(&ptpClock->currentDS.meanPathDelay);
 			ptpClock->slaveStats.mpdStatsUpdated = TRUE;
 			}
 		} else {
-		    ptpClock->slaveStats.mpdMax = max(ptpClock->slaveStats.mpdMax, timeInternalToDouble(&ptpClock->currentDS.meanPathDelay));
-		    ptpClock->slaveStats.mpdMin = min(ptpClock->slaveStats.mpdMin, timeInternalToDouble(&ptpClock->currentDS.meanPathDelay));
+		    ptpClock->slaveStats.mpdMax = max(ptpClock->slaveStats.mpdMax, ti_to_double(&ptpClock->currentDS.meanPathDelay));
+		    ptpClock->slaveStats.mpdMin = min(ptpClock->slaveStats.mpdMin, ti_to_double(&ptpClock->currentDS.meanPathDelay));
 		}
 	}
 #endif /* PTPD_STATISTICS */
@@ -527,16 +527,16 @@ updateOffset(TimeInternal * send_time, TimeInternal * recv_time,
 	if (rtOpts->filterMSOpts.enabled) {
 		/* FALSE if filter wants to skip the update */
 		if (!feedDoubleMovingStatFilter(ptpClock->filterMS,
-						timeInternalToDouble(&ptpClock->rawDelayMS))) {
+						ti_to_double(&ptpClock->rawDelayMS))) {
 			goto finish;
 		}
-		ptpClock->rawDelayMS = doubleToTimeInternal(ptpClock->filterMS->output);
+		ptpClock->rawDelayMS = ti_from_double(ptpClock->filterMS->output);
 	}
 
 	/* run the delayMS outlier filter */
 	if(!rtOpts->noAdjust && ptpClock->oFilterMS.config.enabled && (ptpClock->oFilterMS.config.alwaysFilter || !ptpClock->servo.runningMaxOutput)) {
-		if(ptpClock->oFilterMS.filter(&ptpClock->oFilterMS, timeInternalToDouble(&ptpClock->rawDelayMS))) {
-			ptpClock->delayMS = doubleToTimeInternal(ptpClock->oFilterMS.output);
+		if(ptpClock->oFilterMS.filter(&ptpClock->oFilterMS, ti_to_double(&ptpClock->rawDelayMS))) {
+			ptpClock->delayMS = ti_from_double(ptpClock->oFilterMS.output);
 		} else {
 			ptpClock->counters.delayMSOutliersFound++;
 			/* If the outlier filter has blocked the sample, "reverse" the last maxDelay action */
@@ -608,17 +608,17 @@ updateOffset(TimeInternal * send_time, TimeInternal * recv_time,
 
 #ifdef PTPD_STATISTICS
 	if(!ptpClock->oFilterMS.lastOutlier) {
-            feedDoublePermanentStdDev(&ptpClock->slaveStats.ofmStats, timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster));
-            feedDoublePermanentMedian(&ptpClock->slaveStats.ofmMedianContainer, timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster));
+            feedDoublePermanentStdDev(&ptpClock->slaveStats.ofmStats, ti_to_double(&ptpClock->currentDS.offsetFromMaster));
+            feedDoublePermanentMedian(&ptpClock->slaveStats.ofmMedianContainer, ti_to_double(&ptpClock->currentDS.offsetFromMaster));
 		if(!ptpClock->slaveStats.ofmStatsUpdated) {
-			if(timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster) != 0.0){
-			ptpClock->slaveStats.ofmMax = timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster);
-			ptpClock->slaveStats.ofmMin = timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster);
+			if(ti_to_double(&ptpClock->currentDS.offsetFromMaster) != 0.0){
+			ptpClock->slaveStats.ofmMax = ti_to_double(&ptpClock->currentDS.offsetFromMaster);
+			ptpClock->slaveStats.ofmMin = ti_to_double(&ptpClock->currentDS.offsetFromMaster);
 			ptpClock->slaveStats.ofmStatsUpdated = TRUE;
 			}
 		} else {
-		    ptpClock->slaveStats.ofmMax = max(ptpClock->slaveStats.ofmMax, timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster));
-		    ptpClock->slaveStats.ofmMin = min(ptpClock->slaveStats.ofmMin, timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster));
+		    ptpClock->slaveStats.ofmMax = max(ptpClock->slaveStats.ofmMax, ti_to_double(&ptpClock->currentDS.offsetFromMaster));
+		    ptpClock->slaveStats.ofmMin = min(ptpClock->slaveStats.ofmMin, ti_to_double(&ptpClock->currentDS.offsetFromMaster));
 		}
 
 
@@ -822,7 +822,7 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	     ti_seconds(&ptpClock->currentDS.offsetFromMaster))) {
 		INFO("Offset %lf greater than "
 		     "administratively set maximum %d\n. Will not update clock",
-		     timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster),
+		     ti_to_double(&ptpClock->currentDS.offsetFromMaster),
 		     rtOpts->maxOffset);
 		return;
 	}
@@ -833,7 +833,7 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		if(!rtOpts->enablePanicMode) {
 			if (!rtOpts->noResetClock)
 				CRITICAL("Offset above 1 second (%.09f s). Clock will step.\n", 
-					    timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster));
+					    ti_to_double(&ptpClock->currentDS.offsetFromMaster));
 			ptpClock->clockControl.stepRequired = TRUE;
 			ptpClock->clockControl.updateOK = TRUE;
 			ptpClock->pastStartup = TRUE;
@@ -873,7 +873,7 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		}
 
 		CRITICAL("Offset above 1 second (%.09f s)  - entering panic mode. Clock updates paused.\n",
-			    timeInternalToDouble(&ptpClock->currentDS.offsetFromMaster));
+			    ti_to_double(&ptpClock->currentDS.offsetFromMaster));
 		ptpClock->panicMode = TRUE;
 		ptpClock->panicModeTimeLeft = 6 * rtOpts->panicModeDuration;
 		timerStart(&ptpClock->timers[PANIC_MODE_TIMER], 10);
@@ -1048,7 +1048,7 @@ runPIservo(PIservo* servo, const Integer32 input)
 			dt = servo->dT;
 		} else {
 			ti_sub(&delta, &now, &servo->lastUpdate);
-			dt = timeInternalToDouble(&delta);
+			dt = ti_to_double(&delta);
 		}
 
 		/* Don't use dT longer then max update interval multiplier */
