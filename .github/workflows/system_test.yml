@@ -11,11 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run docker-compose
-        uses: hoverkraft-tech/compose-action@v2.0.1
-        with:
-          up-flags: "-d"
-
-      - name: Execute tests in the running services
+      - name: Execute tests
         run: |
+          docker compose up -d
           ./scripts/wait_for.sh 'docker logs ptpd-slave 2>&1 | grep -q "(slv) Received Peer Delay Interval"' 120

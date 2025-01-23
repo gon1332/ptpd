@@ -2,15 +2,15 @@ FROM ubuntu:22.04
 
 RUN apt-get update && apt-get install -y \
     build-essential \
-    autoconf \
-    automake \
-    libtool \
+    cmake \
+    ninja-build \
+    libsnmp-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . /project
 WORKDIR /project
 
-RUN autoreconf -fi && ./configure && make
+RUN cmake --preset package && cmake --build --preset package
 
-ENTRYPOINT ["src/ptpd2"]
+ENTRYPOINT ["cmake-build-package/src/ptpd2"]
 

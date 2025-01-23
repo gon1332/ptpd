@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: BSD-2-Clause
+
+#
+# Generates the configuration file at the `out` path, given the template in the `in` path
+# Eg. generate_configuration(${PATH_TO}/config.h.in ${PATH_TO}/config.h)
+#
+function(generate_configuration in out)
+    include(CheckIncludeFiles)
+    check_include_files(net/ethernet.h HAVE_NET_ETHERNET_H)
+    check_include_files(net/if_ether.h HAVE_NET_IF_ETHER_H)
+    check_include_files(netinet/ether.h HAVE_NETINET_ETHER_H)
+    check_include_files(netinet/if_ether.h HAVE_NETINET_IF_ETHER_H)
+    check_include_files(netinet/in.h HAVE_NETINET_IN_H)
+    check_include_files(netinet/in_systm.h HAVE_NETINET_IN_SYSTM_H)
+    check_include_files(netdb.h HAVE_NETDB_H)
+    check_include_files(sys/socket.h HAVE_SYS_SOCKET_H)
+    check_include_files(sys/types.h HAVE_SYS_TYPES_H)
+    check_include_files(getopt.h HAVE_GETOPT_H)
+    check_include_files(sched.h HAVE_SCHED_H)
+    check_include_files(linux_rtc.h HAVE_LINUX_RTC_H)
+
+    include(CheckFunctionExists)
+    check_function_exists(clock_gettime HAVE_CLOCK_GETTIME)
+    check_function_exists(gethostbyname2 HAVE_GETHOSTBYNAME2)
+    check_function_exists(getopt_long HAVE_GETOPT_LONG)
+    check_function_exists(setutent HAVE_SETUTENT)
+    check_function_exists(endutent HAVE_ENDUTENT)
+
+    include(CheckSymbolExists)
+    check_symbol_exists(timer_create "time.h" HAVE_POSIX_TIMER)
+    check_symbol_exists(MSG_ERRQUEUE "socket.h" HAVE_DECL_MSG_ERRQUEUE)
+
+    include(CheckStructHasMember)
+    if (${HAVE_NET_ETHERNET_H})
+        check_struct_has_member("struct ether_addr" octet net/ethernet.h HAVE_STRUCT_ETHER_ADDR_OCTET)
+    endif ()
+    if (${HAVE_NET_IF_ETHER_H})
+        check_struct_has_member("struct ether_addr" octet net/if_ether.h HAVE_STRUCT_ETHER_ADDR_OCTET)
+    endif ()
+    if (${HAVE_NETINET_ETHER_H})
+        check_struct_has_member("struct ether_addr" octet netinet/ether.h HAVE_STRUCT_ETHER_ADDR_OCTET)
+    endif ()
+    if (${HAVE_NETINET_IF_ETHER_H})
+        check_struct_has_member("struct ether_addr" octet netinet/if_ether.h HAVE_STRUCT_ETHER_ADDR_OCTET)
+    endif ()
+    configure_file(${in} ${out})
+endfunction()

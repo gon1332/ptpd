@@ -62,6 +62,17 @@ if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.ne
 #ifdef HAVE_NET_ETHERNET_H
 #  include <net/ethernet.h>
 #endif
+#ifdef HAVE_NETINET_IF_ETHER_H
+#include <netinet/if_ether.h>
+#endif /* HAVE_NETINET_IF_ETHER_H */
+
+#ifdef __OpenBSD__
+/* For *reasons*, CMake cannot find this file in OpenBSD.
+ * As a result I do not use the HAVE_NETINET_IF_ETHER_H guards here:
+ */
+#include <netinet/if_ether.h>
+#endif /* __OpenBSD__ */
+
 #include <ifaddrs.h>
 # define IFACE_NAME_LENGTH         IF_NAMESIZE
 # define NET_ADDRESS_LENGTH        INET_ADDRSTRLEN
