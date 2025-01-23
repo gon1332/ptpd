@@ -44,7 +44,8 @@
 #define PTPD_H_
 
 #ifdef HAVE_CONFIG_H
-# include <config.h>
+// # include <config.h>
+# include <config_cmake.h>
 #endif /* HAVE_CONFIG_H */
 
 

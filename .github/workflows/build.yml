@@ -8,12 +8,13 @@ jobs:
   linux:
     runs-on: ubuntu-latest
     steps:
+      - name: Install dependencies
+        run: sudo apt install cmake ninja-build
       - uses: actions/checkout@v4
       - name: Build on Ubuntu
         run: |
-          autoreconf -vfi
-          ./configure
-          make
+          cmake --preset package
+          cmake --build --preset package --target ptpd2
 
   openbsd:
     runs-on: ubuntu-latest
@@ -79,10 +80,10 @@ jobs:
   macos:
     runs-on: macos-latest
     steps:
+      - name: Install dependencies
+        run: sudo apt install cmake ninja-build
       - uses: actions/checkout@v4
       - name: Build on macOS
         run: |
-          brew install autoconf automake libtool
-          autoreconf -vfi
-          ./configure
-          make
+          cmake --preset package
+          cmake --build --preset package --target ptpd2

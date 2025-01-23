@@ -27,11 +27,14 @@
 if it's POSIX compatible, if you succeed, report it to ptpd-devel@sourceforge.net
 #endif
 
-#ifdef	linux
+#ifdef linux
 #include<netinet/in.h>
 #include<net/if.h>
 #include<net/if_arp.h>
 #include <ifaddrs.h>
+#ifdef HAVE_NET_ETHERNET_H
+#include <net/ethernet.h>
+#endif
 #define IFACE_NAME_LENGTH         IF_NAMESIZE
 #define NET_ADDRESS_LENGTH        INET_ADDRSTRLEN
 
