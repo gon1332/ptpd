@@ -14,7 +14,7 @@ jobs:
       - name: Build on Ubuntu
         run: |
           cmake --preset package
-          cmake --build --preset package --target ptpd2
+          cmake --build --preset package
 
   openbsd:
     runs-on: ubuntu-latest
@@ -86,4 +86,4 @@ jobs:
       - name: Build on macOS
         run: |
           cmake --preset package
-          cmake --build --preset package --target ptpd2
+          cmake --build --preset package

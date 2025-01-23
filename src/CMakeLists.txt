@@ -55,4 +55,6 @@ target_compile_definitions(ptpd2 PUBLIC
         $<$<BOOL:${STATISTICS}>:PTPD_STATISTICS>
 )
 
-add_subdirectory(unit_tests)
+if (${TESTING})
+    add_subdirectory(unit_tests)
+endif ()

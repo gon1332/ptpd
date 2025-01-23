@@ -22,6 +22,9 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config_cmake.h.in ${CMAKE_CURRENT_BIN
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_compile_definitions(HAVE_CONFIG_H)
 
-include(CTest)
-add_subdirectory(external/Unity)
+if (${TESTING})
+    include(CTest)
+    add_subdirectory(external/Unity)
+endif ()
+
 add_subdirectory(src)

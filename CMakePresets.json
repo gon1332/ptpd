@@ -17,7 +17,9 @@
         }
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "clang",
+        "TESTING": "ON"
       }
     },
     {
@@ -31,7 +33,8 @@
         }
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "clang"
       }
     }
   ],
@@ -40,6 +43,11 @@
       "name": "ut",
       "configurePreset": "ut",
       "targets": ["test_time_ops"]
+    },
+    {
+      "name": "package",
+      "configurePreset": "package",
+      "targets": ["ptpd2"]
     }
   ],
   "testPresets": [
