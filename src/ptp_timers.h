@@ -28,12 +28,12 @@
 
 #include "ptpd.h"
 
-#ifdef PTPD_PTIMERS
+#ifdef HAVE_POSIX_TIMER
 #define LOG_MIN_INTERVAL -7
 #else
 /* 62.5ms tick for interval timers = 16/sec max */
 #define LOG_MIN_INTERVAL -4
-#endif /* PTPD_PTIMERS */
+#endif /* HAVE_POSIX_TIMER */
 
 /* safeguard: a week */
 #define PTPTIMER_MAX_INTERVAL 604800

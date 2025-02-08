@@ -21,7 +21,9 @@ while true; do
   # Execute the command
   eval "$command"
   if [ $? -eq 0 ]; then
-    echo "Success"
+    current_time=$(date +%s)
+    elapsed_time=$((current_time - start_time))
+    echo "Succeeded after $elapsed_time seconds"
     exit 0
   fi
 
@@ -29,11 +31,10 @@ while true; do
   current_time=$(date +%s)
   elapsed_time=$((current_time - start_time))
   if [ $elapsed_time -ge "$timeout" ]; then
-    echo "Fail"
+    echo "Failed after $elapsed_time seconds"
     exit 1
   fi
 
   # Sleep for a short interval before checking again
   sleep 1
 done
-

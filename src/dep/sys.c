@@ -1432,62 +1432,65 @@ static const struct sigevent* timerIntHandler(void* data, int id) {
 }
 #endif
 
- void getTime(TimeInternal *time)
- {
+void
+getTime(TimeInternal *time)
+{
 #ifdef __QNXNTO__
-  static TimerIntData tmpData;
-  int ret;
-  uint64_t delta;
-  double tick_delay;
-  uint64_t clock_offset;
-  struct timespec tp;
-  if(!tDataUpdated) {
-    memset(&tData, 0, sizeof(TimerIntData));
-    if(ThreadCtl(_NTO_TCTL_IO, 0) == -1) {
-      ERROR("QNX: could not give process I/O privileges");
-      return;
-    }
+	static TimerIntData tmpData;
+	int ret;
+	uint64_t delta;
+	double tick_delay;
+	uint64_t clock_offset;
+	struct timespec tp;
+	if (!tDataUpdated) {
+		memset(&tData, 0, sizeof(TimerIntData));
+		if (ThreadCtl(_NTO_TCTL_IO, 0) == -1) {
+			ERROR("QNX: could not give process I/O privileges");
+			return;
+		}
 
-    tData.cps = SYSPAGE_ENTRY(qtime)->cycles_per_sec;
-    tData.ns_per_tick = 1000000000.0 / tData.cps;
-    tData.prev_tsc = ClockCycles();
-    clock_gettime(CLOCK_REALTIME, &tp);
-    tData.last_clock = timespec2nsec(&tp);
-    ret = InterruptAttach(0, timerIntHandler, &tData, sizeof(TimerIntData), _NTO_INTR_FLAGS_END | _NTO_INTR_FLAGS_TRK_MSK);
+		tData.cps = SYSPAGE_ENTRY(qtime)->cycles_per_sec;
+		tData.ns_per_tick = 1000000000.0 / tData.cps;
+		tData.prev_tsc = ClockCycles();
+		clock_gettime(CLOCK_REALTIME, &tp);
+		tData.last_clock = timespec2nsec(&tp);
+		ret = InterruptAttach(0, timerIntHandler, &tData, sizeof(TimerIntData),
+				      _NTO_INTR_FLAGS_END | _NTO_INTR_FLAGS_TRK_MSK);
 
-    if(ret == -1) {
-      ERROR("QNX: could not attach to timer interrupt");
-      return ;
-    }
-    tDataUpdated = TRUE;
+		if (ret == -1) {
+			ERROR("QNX: could not attach to timer interrupt");
+			return;
+		}
+		tDataUpdated = TRUE;
 
-    ti_from_timespec(&tp, time);
-    return;
-  }
+		ti_from_timespec(&tp, time);
+		return;
+	}
 
-  memcpy(&tmpData, &tData, sizeof(TimerIntData));
+	memcpy(&tmpData, &tData, sizeof(TimerIntData));
 
-  delta = ClockCycles() - tmpData.prev_tsc;
+	delta = ClockCycles() - tmpData.prev_tsc;
 
-  /* compute time since last clock update */
-  tick_delay = (double)delta / (double)tmpData.filtered_delta;
-  clock_offset = (uint64_t)(tick_delay * tmpData.ns_per_tick * (double)tmpData.filtered_delta);
+	/* compute time since last clock update */
+	tick_delay = (double)delta / (double)tmpData.filtered_delta;
+	clock_offset =
+		(uint64_t)(tick_delay * tmpData.ns_per_tick * (double)tmpData.filtered_delta);
 
-  /* not filtered yet */
-  if(tData.counter < 2) {
-    clock_offset = 0;
-  }
+	/* not filtered yet */
+	if (tData.counter < 2) {
+		clock_offset = 0;
+	}
 
-    DBGV("QNX getTime cps: %lld tick interval: %.09f, time since last tick: %lld\n",
-    tmpData.cps, tmpData.filtered_delta * tmpData.ns_per_tick, clock_offset);
+	DBGV("QNX getTime cps: %lld tick interval: %.09f, time since last tick: %lld\n",
+	     tmpData.cps, tmpData.filtered_delta * tmpData.ns_per_tick, clock_offset);
 
-    nsec2timespec(&tp, tmpData.last_clock + clock_offset);
+	nsec2timespec(&tp, tmpData.last_clock + clock_offset);
 
-    ti_from_timespec(&tp, time);
-    return;
+	ti_from_timespec(&tp, time);
+	return;
 #else
 
-#if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
+#ifdef HAVE_POSIX_TIMER
 
 	struct timespec tp;
 	if (clock_gettime(CLOCK_REALTIME, &tp) < 0) {
@@ -1502,14 +1505,14 @@ static const struct sigevent* timerIntHandler(void* data, int id) {
 	gettimeofday(&tv, 0);
 	ti_from_timeval(&tv, time);
 
-#endif /* _POSIX_TIMERS */
+#endif /* HAVE_POSIX_TIMER */
 #endif /* __QNXNTO__ */
 }
 
 void
 getTimeMonotonic(TimeInternal * time)
 {
-#if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
+#ifdef HAVE_POSIX_TIMER
 
 	struct timespec tp;
 #ifndef CLOCK_MONOTINIC                                                                                                      
@@ -1527,7 +1530,7 @@ getTimeMonotonic(TimeInternal * time)
 	gettimeofday(&tv, 0);
 	ti_from_timeval(&tv, time);
 
-#endif /* _POSIX_TIMERS */
+#endif /* HAVE_POSIX_TIMER */
 }
 
 
@@ -1535,7 +1538,7 @@ void
 setTime(TimeInternal * time)
 {
 
-#if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
+#ifdef HAVE_POSIX_TIMER
 
 	struct timespec tp;
 	ti_to_timespec(time, &tp);
@@ -1545,9 +1548,9 @@ setTime(TimeInternal * time)
 	struct timeval tv;
 	ti_to_timeval(time, &tv);
 
-#endif /* _POSIX_TIMERS */
+#endif /* HAVE_POSIX_TIMER */
 
-#if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
+#ifdef HAVE_POSIX_TIMER
 
 	if (clock_settime(CLOCK_REALTIME, &tp) < 0) {
 		PERROR("Could not set system time");
@@ -1558,7 +1561,7 @@ setTime(TimeInternal * time)
 
 	settimeofday(&tv, 0);
 
-#endif /* _POSIX_TIMERS */
+#endif /* HAVE_POSIX_TIMER */
 
 	struct timespec tmpTs = {ti_seconds(time), 0};
 

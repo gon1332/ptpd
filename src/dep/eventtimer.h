@@ -33,12 +33,12 @@ struct EventTimer {
 	Boolean (*isRunning) (EventTimer* timer);	
 
 	/* implementation data */
-#ifdef PTPD_PTIMERS
+#ifdef HAVE_POSIX_TIMER
 	timer_t timerId;
 #else
 	int32_t itimerInterval;
 	int32_t itimerLeft;
-#endif /* PTPD_PTIMERS */
+#endif /* HAVE_POSIX_TIMER */
 
 	/* linked list */
 	EventTimer *_first;

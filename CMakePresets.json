@@ -17,7 +17,22 @@
         }
       },
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
+        "CMAKE_BUILD_TYPE": "Debug",
+        "TESTING": "ON"
+      }
+    },
+    {
+      "name": "package",
+      "description": "package",
+      "binaryDir": "${sourceDir}/cmake-build-${presetName}",
+      "generator": "Ninja",
+      "vendor": {
+        "jetbrains.com/clion": {
+          "toolchain": "WSL"
+        }
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
@@ -26,6 +41,11 @@
       "name": "ut",
       "configurePreset": "ut",
       "targets": ["test_time_ops"]
+    },
+    {
+      "name": "package",
+      "configurePreset": "package",
+      "targets": ["ptpd2"]
     }
   ],
   "testPresets": [

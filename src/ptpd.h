@@ -43,10 +43,7 @@
 #ifndef PTPD_H_
 #define PTPD_H_
 
-#ifdef HAVE_CONFIG_H
-# include <config.h>
-#endif /* HAVE_CONFIG_H */
-
+#include "ptpd_config.h"
 
 #ifdef linux
 #	ifndef _GNU_SOURCE
@@ -139,6 +136,9 @@
 #include <netinet/if_ether.h>
 #endif /* HAVE_NETINET_IF_ETHER_H */
 
+#ifdef HAVE_NET_IF_ETHER_H
+#include <net/if_ether.h>
+#endif /* HAVE_NET_IF_ETHER_H */
 
 #ifdef PTPD_PCAP
 #ifdef HAVE_PCAP_PCAP_H
