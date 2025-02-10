@@ -156,9 +156,27 @@ double ti_to_double(const TimeInternal *from);
 TimeInternal ti_from_double(double from);
 
 /**
- * @param[in] t The time to test
+ * @param[in] t The time to get the seconds from
  * @returns the amount of seconds contained in t
  */
 int32_t ti_seconds(const TimeInternal *t);
+
+/**
+ * @param[in] t The time to get the milliseconds from
+ * @returns the amount of milliseconds contained in t
+ */
+int32_t ti_milliseconds_part(const TimeInternal *t);
+
+/**
+ * @param[in] t The time to get the microseconds from
+ * @returns the amount of microseconds contained in t
+ */
+int32_t ti_microseconds_part(const TimeInternal *t);
+
+/**
+ * @param[in] t The time to get the nanoseconds from
+ * @returns the amount of nanoseconds contained in t
+ */
+int32_t ti_nanoseconds_part(const TimeInternal *t);
 
 #endif /* TIME_OPS_H_ */

@@ -481,6 +481,16 @@ test_ti_is_close(void)
 	}
 }
 
+void
+test_ti_parts(void)
+{
+	TimeInternal time = {111222333444};
+	TEST_ASSERT_EQUAL_INT32(111, ti_seconds(&time));
+	TEST_ASSERT_EQUAL_INT32(222, ti_milliseconds_part(&time));
+	TEST_ASSERT_EQUAL_INT32(333, ti_microseconds_part(&time));
+	TEST_ASSERT_EQUAL_INT32(444, ti_nanoseconds_part(&time));
+}
+
 int
 main(void)
 {
@@ -501,6 +511,7 @@ main(void)
 	RUN_TEST(test_ti_inc);
 	RUN_TEST(test_ti_abs);
 	RUN_TEST(test_ti_is_close);
+	RUN_TEST(test_ti_parts);
 
 	return UNITY_END();
 }

@@ -12,6 +12,8 @@
 
 #include "../ptpd.h"
 
+#if 0
+
 #define EVENTTIMER_MAX_DESC		20
 #define EVENTTIMER_MIN_INTERVAL_US	250 /* 4000/sec */
 
@@ -54,6 +56,7 @@ void setupEventTimer(EventTimer *timer);
 void startEventTimers();
 void shutdownEventTimers();
 
+#endif
 
 #endif /* EVENTTIMER_H_ */
 

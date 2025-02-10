@@ -55,6 +55,7 @@ typedef struct {
  * than descriptions in ptp_timers.c
  */
 
+#if 0
 enum {
   PDELAYREQ_INTERVAL_TIMER=0,/**<\brief Timer handling the PdelayReq Interval*/
   DELAYREQ_INTERVAL_TIMER,/**<\brief Timer handling the delayReq Interva*/
@@ -80,6 +81,7 @@ enum {
   TIMINGDOMAIN_UPDATE_TIMER,
   PTP_MAX_TIMER
 };
+#endif
 
 /* functions used by 1588 only */
 void timerStop(IntervalTimer *itimer);

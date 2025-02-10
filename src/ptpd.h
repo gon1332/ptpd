@@ -44,6 +44,7 @@
 #define PTPD_H_
 
 #include "ptpd_config.h"
+#include "timer.h"
 
 #ifdef linux
 #	ifndef _GNU_SOURCE
@@ -370,7 +371,7 @@ void displayPtpClock (const PtpClock*);
 void timeInternal_display(const TimeInternal*);
 void clockIdentity_display(const ClockIdentity);
 void netPath_display(const NetPath*);
-void intervalTimer_display(const IntervalTimer*);
+void intervalTimer_display(const struct tmr *);
 void integer64_display (const Integer64*);
 void timeInterval_display(const TimeInterval*);
 void portIdentity_display(const PortIdentity*);

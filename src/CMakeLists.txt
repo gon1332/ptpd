@@ -1,7 +1,16 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-add_library(time_ops OBJECT time_ops.c)
-target_include_directories(time_ops PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(core OBJECT
+        time_ops.c
+        timer.c
+        timer_collection.c
+        timer_itimer.c
+        $<$<BOOL:${HAVE_POSIX_TIMER}>:timer_posix.c>
+)
+target_include_directories(core
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib
+)
 
 add_executable(ptpd2
         arith.c
@@ -9,10 +18,8 @@ add_executable(ptpd2
         display.c
         management.c
         protocol.c
-        ptp_timers.c
         ptpd.c
         signaling.c
-        time_ops.c
         timingdomain.c
         dep/iniparser/dictionary.c
         dep/iniparser/iniparser.c
@@ -21,11 +28,6 @@ add_executable(ptpd2
         dep/alarms.c
         dep/configdefaults.c
         dep/daemonconfig.c
-        dep/eventtimer.c
-        $<IF:$<BOOL:${HAVE_POSIX_TIMER}>,
-            dep/eventtimer_posix.c, # true
-            dep/eventtimer_itimer.c # false
-        >
         dep/ipv4_acl.c
         dep/msg.c
         dep/net.c
@@ -44,11 +46,13 @@ target_include_directories(ptpd2 PUBLIC
         dep
 )
 target_link_libraries(ptpd2 PUBLIC
+        core
         m
         "$<$<BOOL:${SNMP}>:netsnmp;netsnmpagent;netsnmpmibs>"
 )
 target_compile_options(ptpd2 PUBLIC
         -Wall
+        -gdwarf-4
         "$<$<BOOL:${SNMP}>:`net-snmp-config --base-cflags`>"
 )
 target_compile_definitions(ptpd2 PUBLIC

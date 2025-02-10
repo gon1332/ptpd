@@ -34,7 +34,8 @@
  */
 
 #include "ptpd.h"
-
+#include "timer.h"
+#include "timer_collection.h"
 
 /* Init ptpClock with run time values (initialization constants are in constants.h)*/
 void initData(RunTimeOpts *rtOpts, PtpClock *ptpClock)
@@ -391,7 +392,7 @@ void s1(MsgHeader *header,MsgAnnounce *announce,PtpClock *ptpClock, const RunTim
 		WARNING("Leap second event aborted by GM!\n");
 		ptpClock->leapSecondPending = FALSE;
 		ptpClock->leapSecondInProgress = FALSE;
-		timerStop(&ptpClock->timers[LEAP_SECOND_PAUSE_TIMER]);
+		tmr_stop(tmrs_get(LEAP_SECOND_PAUSE_TIMER));
 		ptpClock->clockStatus.leapInsert = FALSE;
 		ptpClock->clockStatus.leapDelete = FALSE;
 		ptpClock->clockStatus.update = TRUE;
@@ -660,7 +661,8 @@ bmcStateDecision(ForeignMasterRecord *foreign, const RunTimeOpts *rtOpts, PtpClo
 				displayStatus(ptpClock, "State: ");
 			if(rtOpts->calibrationDelay) {
 				ptpClock->isCalibrated = FALSE;
-				timerStart(&ptpClock->timers[CALIBRATION_DELAY_TIMER], rtOpts->calibrationDelay);
+				tmr_start(tmrs_get(CALIBRATION_DELAY_TIMER),
+					  rtOpts->calibrationDelay);
 			}
 		}
                 if(rtOpts->unicastNegotiation && ptpClock->parentGrants != NULL) {
@@ -716,7 +718,8 @@ bmcStateDecision(ForeignMasterRecord *foreign, const RunTimeOpts *rtOpts, PtpClo
 					displayStatus(ptpClock, "State: ");
 				if(rtOpts->calibrationDelay) {
 					ptpClock->isCalibrated = FALSE;
-					timerStart(&ptpClock->timers[CALIBRATION_DELAY_TIMER], rtOpts->calibrationDelay);
+					tmr_start(tmrs_get(CALIBRATION_DELAY_TIMER),
+						  rtOpts->calibrationDelay);
 				}
 			}
 			return PTP_SLAVE;

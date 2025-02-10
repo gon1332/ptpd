@@ -729,14 +729,15 @@ logStatistics(PtpClock * ptpClock)
 	}
 
 	time_s = ti_seconds(&now);
+	const int32_t us_in_time = ti_microseconds_part(&now);
 
 	/* output date-time timestamp if configured */
 	if (rtOpts.statisticsTimestamp == TIMESTAMP_DATETIME ||
 	    rtOpts.statisticsTimestamp == TIMESTAMP_BOTH) {
 	    strftime(time_str, MAXTIMESTR, "%Y-%m-%d %X", localtime(&time_s));
-	    len += snprintf(sbuf + len, sizeof(sbuf) - len, "%s.%06d, %s, ",
-		       time_str, (int)now.nanoseconds/1000, /* Timestamp */
-		       translatePortState(ptpClock)); /* State */
+	    len += snprintf(sbuf + len, sizeof(sbuf) - len, "%s.%06" PRId32 ", %s, ", time_str,
+			    us_in_time, /* Timestamp */
+			    translatePortState(ptpClock)); /* State */
 	}
 
 	/* output unix timestamp s.ns if configured */

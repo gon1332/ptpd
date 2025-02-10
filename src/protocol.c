@@ -33,6 +33,8 @@
  */
 
 #include "ptpd.h"
+#include "timer.h"
+#include "timer_collection.h"
 
 Boolean doInit(RunTimeOpts*,PtpClock*);
 static void doState(RunTimeOpts*,PtpClock*);
@@ -177,8 +179,8 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
 	DBG("event POWERUP\n");
 
-	timerStart(&ptpClock->timers[TIMINGDOMAIN_UPDATE_TIMER],timingDomain.updateInterval);
-	timerStart(&ptpClock->timers[ALARM_UPDATE_TIMER],ALARM_UPDATE_INTERVAL);
+	tmr_start(tmrs_get(TIMINGDOMAIN_UPDATE_TIMER), timingDomain.updateInterval);
+	tmr_start(tmrs_get(ALARM_UPDATE_TIMER), ALARM_UPDATE_INTERVAL);
 
 	ptpClock->disabled = rtOpts->portDisabled;
 
@@ -200,8 +202,9 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		writeStatusFile(ptpClock, rtOpts, TRUE);
 
 	/* run the status file update every 1 .. 1.2 seconds */
-	timerStart(&ptpClock->timers[STATUSFILE_UPDATE_TIMER],rtOpts->statusFileUpdateInterval * (1.0 + 0.2 * getRand()));
-	timerStart(&ptpClock->timers[PERIODIC_INFO_TIMER],rtOpts->statsUpdateInterval);
+	tmr_start(tmrs_get(STATUSFILE_UPDATE_TIMER),
+		  rtOpts->statusFileUpdateInterval * (1.0 + 0.2 * getRand()));
+	tmr_start(tmrs_get(PERIODIC_INFO_TIMER), rtOpts->statsUpdateInterval);
 
 	DBG("Debug Initializing...\n");
 
@@ -245,7 +248,7 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 				}
 
 			   }
-			
+
 		} else {
 			doState(rtOpts, ptpClock);
 		}
@@ -262,8 +265,8 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			restartSubsystems(rtOpts, ptpClock);
 		}
 
-		if (timerExpired(&ptpClock->timers[TIMINGDOMAIN_UPDATE_TIMER])) {
-		    timingDomain.update(&timingDomain);
+		if (tmr_expired(tmrs_get(TIMINGDOMAIN_UPDATE_TIMER))) {
+			timingDomain.update(&timingDomain);
 		}
 
 		if(ptpClock->defaultDS.slaveOnly) {
@@ -274,19 +277,18 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		    SET_ALARM(ALRM_PORT_STATE, ptpClock->portDS.portState != PTP_MASTER && ptpClock->portDS.portState != PTP_PASSIVE );
 		}
 
-		if (timerExpired(&ptpClock->timers[ALARM_UPDATE_TIMER])) {
-		    if(rtOpts->alarmInitialDelay && (ptpClock->alarmDelay > 0)) {
-			ptpClock->alarmDelay -= ALARM_UPDATE_INTERVAL;
-			if(ptpClock->alarmDelay <= 0 && rtOpts->alarmsEnabled) {
-			    INFO("Alarm delay expired - starting alarm processing\n");
-			    enableAlarms(ptpClock->alarms, ALRM_MAX, TRUE);
+		if (tmr_expired(tmrs_get(ALARM_UPDATE_TIMER))) {
+			if (rtOpts->alarmInitialDelay && (ptpClock->alarmDelay > 0)) {
+				ptpClock->alarmDelay -= ALARM_UPDATE_INTERVAL;
+				if (ptpClock->alarmDelay <= 0 && rtOpts->alarmsEnabled) {
+					INFO("Alarm delay expired - starting alarm processing\n");
+					enableAlarms(ptpClock->alarms, ALRM_MAX, TRUE);
+				}
 			}
-		    }
-		    updateAlarms(ptpClock->alarms, ALRM_MAX);
+			updateAlarms(ptpClock->alarms, ALRM_MAX);
 		}
 
-
-		if (timerExpired(&ptpClock->timers[UNICAST_GRANT_TIMER])) {
+		if (tmr_expired(tmrs_get(UNICAST_GRANT_TIMER))) {
 			if(rtOpts->unicastDestinationsSet) {
 			    refreshUnicastGrants(ptpClock->unicastGrants,
 				ptpClock->unicastDestinationCount, rtOpts, ptpClock);
@@ -336,17 +338,17 @@ void
 toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
 	ptpClock->message_activity = TRUE;
-	
+
 	/* leaving state tasks */
 	switch (ptpClock->portDS.portState)
 	{
 	case PTP_MASTER:
 
-		timerStop(&ptpClock->timers[SYNC_INTERVAL_TIMER]);
-		timerStop(&ptpClock->timers[ANNOUNCE_INTERVAL_TIMER]);
-		timerStop(&ptpClock->timers[PDELAYREQ_INTERVAL_TIMER]);
-		timerStop(&ptpClock->timers[DELAY_RECEIPT_TIMER]);
-		timerStop(&ptpClock->timers[MASTER_NETREFRESH_TIMER]);
+		tmr_stop(tmrs_get(SYNC_INTERVAL_TIMER));
+		tmr_stop(tmrs_get(ANNOUNCE_INTERVAL_TIMER));
+		tmr_stop(tmrs_get(PDELAYREQ_INTERVAL_TIMER));
+		tmr_stop(tmrs_get(DELAY_RECEIPT_TIMER));
+		tmr_stop(tmrs_get(MASTER_NETREFRESH_TIMER));
 
 		if(rtOpts->unicastNegotiation && rtOpts->ipMode==IPMODE_UNICAST) {
 		    cancelAllGrants(ptpClock->unicastGrants, UNICAST_MAX_DESTINATIONS,
@@ -359,10 +361,10 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 		break;
 	case PTP_SLAVE:
-		timerStop(&ptpClock->timers[ANNOUNCE_RECEIPT_TIMER]);
-		timerStop(&ptpClock->timers[SYNC_RECEIPT_TIMER]);
-		timerStop(&ptpClock->timers[DELAY_RECEIPT_TIMER]);
-		
+		tmr_stop(tmrs_get(ANNOUNCE_RECEIPT_TIMER));
+		tmr_stop(tmrs_get(SYNC_RECEIPT_TIMER));
+		tmr_stop(tmrs_get(DELAY_RECEIPT_TIMER));
+
 		if(rtOpts->unicastNegotiation && rtOpts->ipMode==IPMODE_UNICAST && ptpClock->parentGrants != NULL) {
 			/* do not cancel, just start re-requesting so we can still send a cancel on exit */
 			ptpClock->parentGrants->grantData[ANNOUNCE_INDEXED].timeLeft = 0;
@@ -379,10 +381,11 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			}
 		}
 
-		if (ptpClock->portDS.delayMechanism == E2E)
-			timerStop(&ptpClock->timers[DELAYREQ_INTERVAL_TIMER]);
-		else if (ptpClock->portDS.delayMechanism == P2P)
-			timerStop(&ptpClock->timers[PDELAYREQ_INTERVAL_TIMER]);
+		if (ptpClock->portDS.delayMechanism == E2E) {
+			tmr_stop(tmrs_get(DELAYREQ_INTERVAL_TIMER));
+		} else if (ptpClock->portDS.delayMechanism == P2P) {
+			tmr_stop(tmrs_get(PDELAYREQ_INTERVAL_TIMER));
+		}
 /* If statistics are enabled, drift should have been saved already - otherwise save it*/
 #ifndef PTPD_STATISTICS
 		/* save observed drift value, don't inform user */
@@ -391,23 +394,23 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 #ifdef PTPD_STATISTICS
 		resetPtpEngineSlaveStats(&ptpClock->slaveStats);
-		timerStop(&ptpClock->timers[STATISTICS_UPDATE_TIMER]);
+		tmr_stop(tmrs_get(STATISTICS_UPDATE_TIMER));
 #endif /* PTPD_STATISTICS */
 		ptpClock->panicMode = FALSE;
 		ptpClock->panicOver = FALSE;
-		timerStop(&ptpClock->timers[PANIC_MODE_TIMER]);
+		tmr_stop(tmrs_get(PANIC_MODE_TIMER));
 		initClock(rtOpts, ptpClock);
-		
+
 	case PTP_PASSIVE:
-		timerStop(&ptpClock->timers[PDELAYREQ_INTERVAL_TIMER]);
-		timerStop(&ptpClock->timers[DELAY_RECEIPT_TIMER]);
-		timerStop(&ptpClock->timers[ANNOUNCE_RECEIPT_TIMER]);
+		tmr_stop(tmrs_get(PDELAYREQ_INTERVAL_TIMER));
+		tmr_stop(tmrs_get(DELAY_RECEIPT_TIMER));
+		tmr_stop(tmrs_get(ANNOUNCE_RECEIPT_TIMER));
 		break;
-		
+
 	case PTP_LISTENING:
-		timerStop(&ptpClock->timers[ANNOUNCE_RECEIPT_TIMER]);
-		timerStop(&ptpClock->timers[SYNC_RECEIPT_TIMER]);
-		timerStop(&ptpClock->timers[DELAY_RECEIPT_TIMER]);
+		tmr_stop(tmrs_get(ANNOUNCE_RECEIPT_TIMER));
+		tmr_stop(tmrs_get(SYNC_RECEIPT_TIMER));
+		tmr_stop(tmrs_get(DELAY_RECEIPT_TIMER));
 
 		/* we're leaving LISTENING - reset counter */
                 if(state != PTP_LISTENING) {
@@ -429,7 +432,7 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 					ptpClock->unicastDestinationCount, ptpClock->unicastDestinations,
 					rtOpts, ptpClock);
 			}
-			
+
 		    } else {
 			initUnicastGrantTable(ptpClock->unicastGrants,
 					ptpClock->portDS.delayMechanism,
@@ -451,7 +454,7 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	default:
 		break;
 	}
-	
+
 	/* entering state tasks */
 
 	ptpClock->counters.stateTransitions++;
@@ -462,17 +465,17 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	 * No need of PRE_MASTER state because of only ordinary clock
 	 * implementation.
 	 */
-	
+
 	switch (state)
 	{
 	case PTP_INITIALIZING:
 		setPortState(ptpClock, PTP_INITIALIZING);
 		break;
-		
+
 	case PTP_FAULTY:
 		setPortState(ptpClock, PTP_FAULTY);
 		break;
-		
+
 	case PTP_DISABLED:
 		/* well, theoretically we're still in the previous state, so we're not in breach of standard */
 		if(rtOpts->unicastNegotiation && rtOpts->ipMode==IPMODE_UNICAST) {
@@ -483,23 +486,23 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		/* see? NOW we're in disabled state */
 		setPortState(ptpClock, PTP_DISABLED);
 		break;
-		
+
 	case PTP_LISTENING:
 
 		if(rtOpts->unicastNegotiation) {
-		    timerStart(&ptpClock->timers[UNICAST_GRANT_TIMER], UNICAST_GRANT_REFRESH_INTERVAL);
+			tmr_start(tmrs_get(UNICAST_GRANT_TIMER), UNICAST_GRANT_REFRESH_INTERVAL);
 		}
 
 		/* in Listening state, make sure we don't send anything. Instead we just expect/wait for announces (started below) */
-		timerStop(&ptpClock->timers[SYNC_INTERVAL_TIMER]);
-		timerStop(&ptpClock->timers[ANNOUNCE_INTERVAL_TIMER]);
-		timerStop(&ptpClock->timers[SYNC_RECEIPT_TIMER]);
-		timerStop(&ptpClock->timers[DELAY_RECEIPT_TIMER]);
-		timerStop(&ptpClock->timers[PDELAYREQ_INTERVAL_TIMER]);
-		timerStop(&ptpClock->timers[DELAYREQ_INTERVAL_TIMER]);
+		tmr_stop(tmrs_get(SYNC_INTERVAL_TIMER));
+		tmr_stop(tmrs_get(ANNOUNCE_INTERVAL_TIMER));
+		tmr_stop(tmrs_get(SYNC_RECEIPT_TIMER));
+		tmr_stop(tmrs_get(DELAY_RECEIPT_TIMER));
+		tmr_stop(tmrs_get(PDELAYREQ_INTERVAL_TIMER));
+		tmr_stop(tmrs_get(DELAYREQ_INTERVAL_TIMER));
 
 		/* This is (re) started on clock updates only */
-                timerStop(&ptpClock->timers[CLOCK_UPDATE_TIMER]);
+		tmr_stop(tmrs_get(CLOCK_UPDATE_TIMER));
 
 		/* if we're ignoring announces (disable_bmca), go straight to master */
 		if(ptpClock->defaultDS.clockQuality.clockClass <= 127 && rtOpts->disableBMCA) {
@@ -540,10 +543,10 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
                             break;
                     }
 		}
-		
-		timerStart(&ptpClock->timers[ANNOUNCE_RECEIPT_TIMER],
-				(ptpClock->portDS.announceReceiptTimeout) *
-				(pow(2,ptpClock->portDS.logAnnounceInterval)));
+
+		tmr_start(tmrs_get(ANNOUNCE_RECEIPT_TIMER),
+			  (ptpClock->portDS.announceReceiptTimeout) *
+				  (pow(2, ptpClock->portDS.logAnnounceInterval)));
 
 		ptpClock->announceTimeouts = 0;
 
@@ -564,27 +567,27 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 #ifndef PTPD_SLAVE_ONLY
 	case PTP_MASTER:
 		if(rtOpts->unicastNegotiation) {
-		    timerStart(&ptpClock->timers[UNICAST_GRANT_TIMER], 1);
+			tmr_start(tmrs_get(UNICAST_GRANT_TIMER), 1);
 		}
-		timerStart(&ptpClock->timers[SYNC_INTERVAL_TIMER],
-			   pow(2,ptpClock->portDS.logSyncInterval));
+		tmr_start(tmrs_get(SYNC_INTERVAL_TIMER), pow(2, ptpClock->portDS.logSyncInterval));
 		DBG("SYNC INTERVAL TIMER : %f \n",
 		    pow(2,ptpClock->portDS.logSyncInterval));
-		timerStart(&ptpClock->timers[ANNOUNCE_INTERVAL_TIMER],
-			   pow(2,ptpClock->portDS.logAnnounceInterval));
-		timerStart(&ptpClock->timers[PDELAYREQ_INTERVAL_TIMER],
-			   pow(2,ptpClock->portDS.logMinPdelayReqInterval));
+		tmr_start(tmrs_get(ANNOUNCE_INTERVAL_TIMER),
+			  pow(2, ptpClock->portDS.logAnnounceInterval));
+		tmr_start(tmrs_get(PDELAYREQ_INTERVAL_TIMER),
+			  pow(2, ptpClock->portDS.logMinPdelayReqInterval));
 		if(ptpClock->portDS.delayMechanism == P2P) {
-		    timerStart(&ptpClock->timers[DELAY_RECEIPT_TIMER], max(
-		    (ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-			MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logMinPdelayReqInterval))));
+			tmr_start(tmrs_get(DELAY_RECEIPT_TIMER),
+				  max((ptpClock->portDS.announceReceiptTimeout) *
+					      (pow(2, ptpClock->portDS.logAnnounceInterval)),
+				      MISSED_MESSAGES_MAX *
+					      (pow(2, ptpClock->portDS.logMinPdelayReqInterval))));
 		}
 		if( rtOpts->do_IGMP_refresh &&
 		    rtOpts->transport == UDP_IPV4 &&
 		    rtOpts->ipMode != IPMODE_UNICAST &&
 		    rtOpts->masterRefreshInterval > 9 )
-			timerStart(&ptpClock->timers[MASTER_NETREFRESH_TIMER],
-			   rtOpts->masterRefreshInterval);
+			tmr_start(tmrs_get(MASTER_NETREFRESH_TIMER), rtOpts->masterRefreshInterval);
 		setPortState(ptpClock, PTP_MASTER);
 		displayStatus(ptpClock, "Now in state: ");
 
@@ -593,15 +596,17 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		break;
 #endif /* PTPD_SLAVE_ONLY */
 	case PTP_PASSIVE:
-		timerStart(&ptpClock->timers[PDELAYREQ_INTERVAL_TIMER],
-			   pow(2,ptpClock->portDS.logMinPdelayReqInterval));
-		timerStart(&ptpClock->timers[ANNOUNCE_RECEIPT_TIMER],
-			   (ptpClock->portDS.announceReceiptTimeout) *
-			   (pow(2,ptpClock->portDS.logAnnounceInterval)));
+		tmr_start(tmrs_get(PDELAYREQ_INTERVAL_TIMER),
+			  pow(2, ptpClock->portDS.logMinPdelayReqInterval));
+		tmr_start(tmrs_get(ANNOUNCE_RECEIPT_TIMER),
+			  (ptpClock->portDS.announceReceiptTimeout) *
+				  (pow(2, ptpClock->portDS.logAnnounceInterval)));
 		if(ptpClock->portDS.delayMechanism == P2P) {
-		    timerStart(&ptpClock->timers[DELAY_RECEIPT_TIMER], max(
-		    (ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-			MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logMinPdelayReqInterval))));
+			tmr_start(tmrs_get(DELAY_RECEIPT_TIMER),
+				  max((ptpClock->portDS.announceReceiptTimeout) *
+					      (pow(2, ptpClock->portDS.logAnnounceInterval)),
+				      MISSED_MESSAGES_MAX *
+					      (pow(2, ptpClock->portDS.logMinPdelayReqInterval))));
 		}
 		setPortState(ptpClock, PTP_PASSIVE);
 		p1(ptpClock, rtOpts);
@@ -614,10 +619,10 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	case PTP_SLAVE:
 		if(rtOpts->unicastNegotiation) {
-		    timerStart(&ptpClock->timers[UNICAST_GRANT_TIMER], 1);
+			tmr_start(tmrs_get(UNICAST_GRANT_TIMER), 1);
 		}
 		if(rtOpts->clockUpdateTimeout > 0) {
-			timerStart(&ptpClock->timers[CLOCK_UPDATE_TIMER], rtOpts->clockUpdateTimeout);
+			tmr_start(tmrs_get(CLOCK_UPDATE_TIMER), rtOpts->clockUpdateTimeout);
 		}
 		initClock(rtOpts, ptpClock);
 		/*
@@ -641,27 +646,30 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		ti_clear(&ptpClock->pdelay_resp_send_time);
 		ti_clear(&ptpClock->pdelay_resp_receive_time);
 
-		timerStart(&ptpClock->timers[OPERATOR_MESSAGES_TIMER],
-			   OPERATOR_MESSAGES_INTERVAL);
-		
-		timerStart(&ptpClock->timers[ANNOUNCE_RECEIPT_TIMER],
-			   (ptpClock->portDS.announceReceiptTimeout) *
-			   (pow(2,ptpClock->portDS.logAnnounceInterval)));
+		tmr_start(tmrs_get(OPERATOR_MESSAGES_TIMER), OPERATOR_MESSAGES_INTERVAL);
 
-		timerStart(&ptpClock->timers[SYNC_RECEIPT_TIMER], max(
-		   (ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-		   MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logSyncInterval))
-		));
+		tmr_start(tmrs_get(ANNOUNCE_RECEIPT_TIMER),
+			  (ptpClock->portDS.announceReceiptTimeout) *
+				  (pow(2, ptpClock->portDS.logAnnounceInterval)));
+
+		tmr_start(tmrs_get(SYNC_RECEIPT_TIMER),
+			  max((ptpClock->portDS.announceReceiptTimeout) *
+				      (pow(2, ptpClock->portDS.logAnnounceInterval)),
+			      MISSED_MESSAGES_MAX * (pow(2, ptpClock->portDS.logSyncInterval))));
 
 		if(ptpClock->portDS.delayMechanism == E2E) {
-		    timerStart(&ptpClock->timers[DELAY_RECEIPT_TIMER], max(
-		    (ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-			MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logMinDelayReqInterval))));
+			tmr_start(tmrs_get(DELAY_RECEIPT_TIMER),
+				  max((ptpClock->portDS.announceReceiptTimeout) *
+					      (pow(2, ptpClock->portDS.logAnnounceInterval)),
+				      MISSED_MESSAGES_MAX *
+					      (pow(2, ptpClock->portDS.logMinDelayReqInterval))));
 		}
 		if(ptpClock->portDS.delayMechanism == P2P) {
-		    timerStart(&ptpClock->timers[DELAY_RECEIPT_TIMER], max(
-		    (ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-			MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logMinPdelayReqInterval))));
+			tmr_start(tmrs_get(DELAY_RECEIPT_TIMER),
+				  max((ptpClock->portDS.announceReceiptTimeout) *
+					      (pow(2, ptpClock->portDS.logAnnounceInterval)),
+				      MISSED_MESSAGES_MAX *
+					      (pow(2, ptpClock->portDS.logMinPdelayReqInterval))));
 		}
 
 		/*
@@ -702,7 +710,7 @@ toState(UInteger8 state, const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		ptpClock->servo.statsUpdated = FALSE;
 		resetDoublePermanentMedian(&ptpClock->servo.driftMedianContainer);
 		resetDoublePermanentStdDev(&ptpClock->servo.driftStats);
-		timerStart(&ptpClock->timers[STATISTICS_UPDATE_TIMER], rtOpts->statsUpdateInterval);
+		tmr_start(tmrs_get(STATISTICS_UPDATE_TIMER), rtOpts->statsUpdateInterval);
 #endif /* PTPD_STATISTICS */
 		break;
 	default:
@@ -751,7 +759,7 @@ doInit(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		restoreDrift(ptpClock, rtOpts, FALSE);
 	m1(rtOpts, ptpClock );
 	msgPackHeader(ptpClock->msgObuf, ptpClock);
-	
+
 	toState(PTP_LISTENING, rtOpts, ptpClock);
 
 	if(rtOpts->statusLog.logEnabled)
@@ -765,7 +773,7 @@ static void
 doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 {
 	UInteger8 state;
-	
+
 	ptpClock->message_activity = FALSE;
 
 	/* Process record_update (BMC algorithm) before everything else */
@@ -792,11 +800,11 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 				toState(state, rtOpts, ptpClock);
 		}
 		break;
-		
+
 	default:
 		break;
 	}
-	
+
 	switch (ptpClock->portDS.portState)
 	{
 	case PTP_FAULTY:
@@ -804,21 +812,20 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		DBG("event FAULT_CLEARED\n");
 		toState(PTP_INITIALIZING, rtOpts, ptpClock);
 		return;
-		
+
 	case PTP_LISTENING:
 	case PTP_UNCALIBRATED:
 	// passive mode behaves like the SLAVE state, in order to wait for the announce timeout of the current active master
 	case PTP_PASSIVE:
 	case PTP_SLAVE:
 		handle(rtOpts, ptpClock);
-		
+
 		/*
 		 * handle SLAVE timers:
 		 *   - No Announce message was received
 		 *   - Time to send new delayReq  (miss of delayResp is not monitored explicitelly)
 		 */
-		if (timerExpired(&ptpClock->timers[ANNOUNCE_RECEIPT_TIMER]))
-		{
+		if (tmr_expired(tmrs_get(ANNOUNCE_RECEIPT_TIMER))) {
 			DBG("event ANNOUNCE_RECEIPT_TIMEOUT_EXPIRES\n");
 
 			if(!ptpClock->defaultDS.slaveOnly &&
@@ -832,7 +839,7 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			} else if(ptpClock->portDS.portState != PTP_LISTENING) {
 #ifdef PTPD_STATISTICS
 				/* stop statistics updates */
-				timerStop(&ptpClock->timers[STATISTICS_UPDATE_TIMER]);
+				tmr_stop(tmrs_get(STATISTICS_UPDATE_TIMER));
 #endif /* PTPD_STATISTICS */
 
 				if(ptpClock->announceTimeouts < rtOpts->announceTimeoutGracePeriod) {
@@ -894,14 +901,13 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 				    toState(PTP_LISTENING, rtOpts, ptpClock);
 				    }
                                 }
-
-                }
+		}
 
 		/* Reset the slave if clock update timeout configured */
-		if ( ptpClock->portDS.portState == PTP_SLAVE && (rtOpts->clockUpdateTimeout > 0) &&
-		    timerExpired(&ptpClock->timers[CLOCK_UPDATE_TIMER])) {
+		if (ptpClock->portDS.portState == PTP_SLAVE && (rtOpts->clockUpdateTimeout > 0) &&
+		    tmr_expired(tmrs_get(CLOCK_UPDATE_TIMER))) {
 			if(ptpClock->panicMode || rtOpts->noAdjust) {
-				timerStart(&ptpClock->timers[CLOCK_UPDATE_TIMER], rtOpts->clockUpdateTimeout);
+				tmr_start(tmrs_get(CLOCK_UPDATE_TIMER), rtOpts->clockUpdateTimeout);
 			} else {
 			    WARNING("No offset updates in %d seconds - resetting slave\n",
 				rtOpts->clockUpdateTimeout);
@@ -909,25 +915,26 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			}
 		}
 
-		if (timerExpired(&ptpClock->timers[OPERATOR_MESSAGES_TIMER])) {
+		if (tmr_expired(tmrs_get(OPERATOR_MESSAGES_TIMER))) {
 			resetWarnings(rtOpts, ptpClock);
 		}
 
 		if(ptpClock->portDS.portState==PTP_SLAVE && rtOpts->calibrationDelay && !ptpClock->isCalibrated) {
-			if(timerExpired(&ptpClock->timers[CALIBRATION_DELAY_TIMER])) {
+			if (tmr_expired(tmrs_get(CALIBRATION_DELAY_TIMER))) {
 				ptpClock->isCalibrated = TRUE;
 				if(ptpClock->clockControl.granted) {
 					NOTICE("Offset computation now calibrated, enabled clock control\n");
 				} else {
 					NOTICE("Offset computation now calibrated\n");
 				}
-			} else if(!timerRunning(&ptpClock->timers[CALIBRATION_DELAY_TIMER])) {
-			    timerStart(&ptpClock->timers[CALIBRATION_DELAY_TIMER], rtOpts->calibrationDelay);
+			} else if (!tmr_running(tmrs_get(CALIBRATION_DELAY_TIMER))) {
+				tmr_start(tmrs_get(CALIBRATION_DELAY_TIMER),
+					  rtOpts->calibrationDelay);
 			}
 		}
 
 		if (ptpClock->portDS.delayMechanism == E2E) {
-			if(timerExpired(&ptpClock->timers[DELAYREQ_INTERVAL_TIMER])) {
+			if (tmr_expired(tmrs_get(DELAYREQ_INTERVAL_TIMER))) {
 				DBG("event DELAYREQ_INTERVAL_TIMEOUT_EXPIRES\n");
 				/* if unicast negotiation is enabled, only request if granted */
 				if(!rtOpts->unicastNegotiation ||
@@ -937,7 +944,7 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 				}
 			}
 		} else if (ptpClock->portDS.delayMechanism == P2P) {
-			if (timerExpired(&ptpClock->timers[PDELAYREQ_INTERVAL_TIMER])) {
+			if (tmr_expired(tmrs_get(PDELAYREQ_INTERVAL_TIMER))) {
 				DBGV("event PDELAYREQ_INTERVAL_TIMEOUT_EXPIRES\n");
 				/* if unicast negotiation is enabled, only request if granted */
 				if(!rtOpts->unicastNegotiation ||
@@ -953,16 +960,16 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
                         DBGV("seconds to midnight: %.3f\n",secondsToMidnight());
 
                 /* leap second period is over */
-                if(timerExpired(&ptpClock->timers[LEAP_SECOND_PAUSE_TIMER]) &&
-                    ptpClock->leapSecondInProgress) {
-                            /*
-                             * do not unpause offset calculation just
-                             * yet, just indicate and it will be
-                             * unpaused in handleAnnounce()
-                            */
-                            ptpClock->leapSecondPending = FALSE;
-                            timerStop(&ptpClock->timers[LEAP_SECOND_PAUSE_TIMER]);
-                    }
+		if (tmr_expired(tmrs_get(LEAP_SECOND_PAUSE_TIMER)) &&
+		    ptpClock->leapSecondInProgress) {
+			/*
+			 * do not unpause offset calculation just
+			 * yet, just indicate and it will be
+			 * unpaused in handleAnnounce()
+			 */
+			ptpClock->leapSecondPending = FALSE;
+			tmr_stop(tmrs_get(LEAP_SECOND_PAUSE_TIMER));
+		}
 		/* check if leap second is near and if we should pause updates */
 		if( ptpClock->leapSecondPending &&
 		    !ptpClock->leapSecondInProgress &&
@@ -977,23 +984,23 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			     * midnight, plus an extra second if inserting
 			     * a leap second
 			     */
-			    timerStart(&ptpClock->timers[LEAP_SECOND_PAUSE_TIMER],
-				       ((secondsToMidnight() +
-				       (int)ptpClock->timePropertiesDS.leap61) +
+			    tmr_start(tmrs_get(LEAP_SECOND_PAUSE_TIMER),
+				      ((secondsToMidnight() +
+					(int)ptpClock->timePropertiesDS.leap61) +
 				       getPauseAfterMidnight(ptpClock->portDS.logAnnounceInterval,
-					    rtOpts->leapSecondPausePeriod)));
+							     rtOpts->leapSecondPausePeriod)));
 		}
 
 /* Update PTP slave statistics from online statistics containers */
 #ifdef PTPD_STATISTICS
-		if (timerExpired(&ptpClock->timers[STATISTICS_UPDATE_TIMER])) {
+		if (tmr_expired(tmrs_get(STATISTICS_UPDATE_TIMER))) {
 			if(!rtOpts->enablePanicMode || !ptpClock->panicMode)
 				updatePtpEngineStats(ptpClock, rtOpts);
 		}
 #endif /* PTPD_STATISTICS */
 
-		SET_ALARM(ALRM_NO_SYNC, timerExpired(&ptpClock->timers[SYNC_RECEIPT_TIMER]));
-		SET_ALARM(ALRM_NO_DELAY, timerExpired(&ptpClock->timers[DELAY_RECEIPT_TIMER]));
+		SET_ALARM(ALRM_NO_SYNC, tmr_expired(tmrs_get(SYNC_RECEIPT_TIMER)));
+		SET_ALARM(ALRM_NO_DELAY, tmr_expired(tmrs_get(DELAY_RECEIPT_TIMER)));
 
 		break;
 #ifndef PTPD_SLAVE_ONLY
@@ -1013,7 +1020,7 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		if(ptpClock->clockStatus.utcOffset != 0) {
 			ptpClock->timePropertiesDS.currentUtcOffset = ptpClock->clockStatus.utcOffset;
 			ptpClock->timePropertiesDS.currentUtcOffsetValid = TRUE;
-	
+
 		}
 
 		/* update the tpDS with clockStatus leap flags - only if running PTP timescale */
@@ -1048,37 +1055,36 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			     * midnight, plus an extra second if inserting
 			     * a leap second
 			     */
-			    timerStart(&ptpClock->timers[LEAP_SECOND_PAUSE_TIMER],
-				       ((secondsToMidnight() +
-				       (int)ptpClock->timePropertiesDS.leap61) +
+			    tmr_start(tmrs_get(LEAP_SECOND_PAUSE_TIMER),
+				      ((secondsToMidnight() +
+					(int)ptpClock->timePropertiesDS.leap61) +
 				       getPauseAfterMidnight(ptpClock->portDS.logAnnounceInterval,
-					    rtOpts->leapSecondPausePeriod)));
+							     rtOpts->leapSecondPausePeriod)));
 		}
 
                 /* leap second period is over */
-                if(timerExpired(&ptpClock->timers[LEAP_SECOND_PAUSE_TIMER]) &&
-                    ptpClock->leapSecondInProgress) {
-                            ptpClock->leapSecondPending = FALSE;
-                            timerStop(&ptpClock->timers[LEAP_SECOND_PAUSE_TIMER]);
-			    ptpClock->leapSecondInProgress = FALSE;
-                            NOTICE("Leap second event over - resuming "
-				    "event message processing\n");
-                }
+		if (tmr_expired(tmrs_get(LEAP_SECOND_PAUSE_TIMER)) &&
+		    ptpClock->leapSecondInProgress) {
+			ptpClock->leapSecondPending = FALSE;
+			tmr_stop(tmrs_get(LEAP_SECOND_PAUSE_TIMER));
+			ptpClock->leapSecondInProgress = FALSE;
+			NOTICE("Leap second event over - resuming "
+			       "event message processing\n");
+		}
 
-
-		if (timerExpired(&ptpClock->timers[ANNOUNCE_INTERVAL_TIMER])) {
+		if (tmr_expired(tmrs_get(ANNOUNCE_INTERVAL_TIMER))) {
 			DBGV("event ANNOUNCE_INTERVAL_TIMEOUT_EXPIRES\n");
 			/* restart the timer with current interval in case if it changed */
-			if(pow(2,ptpClock->portDS.logAnnounceInterval) != ptpClock->timers[ANNOUNCE_INTERVAL_TIMER].interval) {
-				timerStart(&ptpClock->timers[ANNOUNCE_INTERVAL_TIMER],
-					pow(2,ptpClock->portDS.logAnnounceInterval));
+			if (pow(2, ptpClock->portDS.logAnnounceInterval) !=
+			    tmr_interval(tmrs_get(ANNOUNCE_INTERVAL_TIMER))) {
+				tmr_start(tmrs_get(ANNOUNCE_INTERVAL_TIMER),
+					  pow(2, ptpClock->portDS.logAnnounceInterval));
 			}
 			issueAnnounce(rtOpts, ptpClock);
-
 		}
 
 		if (ptpClock->portDS.delayMechanism == P2P) {
-			if (timerExpired(&ptpClock->timers[PDELAYREQ_INTERVAL_TIMER])) {
+			if (tmr_expired(tmrs_get(PDELAYREQ_INTERVAL_TIMER))) {
 				DBGV("event PDELAYREQ_INTERVAL_TIMEOUT_EXPIRES\n");
 				/* if unicast negotiation is enabled, only request if granted */
 				if(!rtOpts->unicastNegotiation ||
@@ -1088,27 +1094,28 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			}
 		}
 
-		if(rtOpts->do_IGMP_refresh &&
-		    rtOpts->transport == UDP_IPV4 &&
-		    rtOpts->ipMode != IPMODE_UNICAST &&
-		    rtOpts->masterRefreshInterval > 9 &&
-		    timerExpired(&ptpClock->timers[MASTER_NETREFRESH_TIMER])) {
-				DBGV("Master state periodic IGMP refresh - next in %d seconds...\n",
-				rtOpts->masterRefreshInterval);
-				/* if multicast refresh failed, restart network - helps recover after driver reloads and such */
-                		    if(!netRefreshIGMP(&ptpClock->netPath, rtOpts, ptpClock)) {
-                        		WARNING("Error while refreshing multicast - restarting transports\n");
-                        		toState(PTP_FAULTY, rtOpts, ptpClock);
-                        		break;
-                		    }
+		if (rtOpts->do_IGMP_refresh && rtOpts->transport == UDP_IPV4 &&
+		    rtOpts->ipMode != IPMODE_UNICAST && rtOpts->masterRefreshInterval > 9 &&
+		    tmr_expired(tmrs_get(MASTER_NETREFRESH_TIMER))) {
+			DBGV("Master state periodic IGMP refresh - next in %d seconds...\n",
+			     rtOpts->masterRefreshInterval);
+			/* if multicast refresh failed, restart network - helps recover after driver
+			 * reloads and such */
+			if (!netRefreshIGMP(&ptpClock->netPath, rtOpts, ptpClock)) {
+				WARNING("Error while refreshing multicast - restarting "
+					"transports\n");
+				toState(PTP_FAULTY, rtOpts, ptpClock);
+				break;
+			}
 		}
 
-		if (timerExpired(&ptpClock->timers[SYNC_INTERVAL_TIMER])) {
+		if (tmr_expired(tmrs_get(SYNC_INTERVAL_TIMER))) {
 			DBGV("event SYNC_INTERVAL_TIMEOUT_EXPIRES\n");
 			/* re-arm timer if changed */
-			if(pow(2,ptpClock->portDS.logSyncInterval) != ptpClock->timers[SYNC_INTERVAL_TIMER].interval) {
-				timerStart(&ptpClock->timers[SYNC_INTERVAL_TIMER],
-					pow(2,ptpClock->portDS.logSyncInterval));
+			if (pow(2, ptpClock->portDS.logSyncInterval) !=
+			    tmr_interval(tmrs_get(SYNC_INTERVAL_TIMER))) {
+				tmr_start(tmrs_get(SYNC_INTERVAL_TIMER),
+					  pow(2, ptpClock->portDS.logSyncInterval));
 			}
 
 			issueSync(rtOpts, ptpClock);
@@ -1123,14 +1130,14 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		    }
 		}
 
-		if (timerExpired(&ptpClock->timers[OPERATOR_MESSAGES_TIMER])) {
+		if (tmr_expired(tmrs_get(OPERATOR_MESSAGES_TIMER))) {
 			resetWarnings(rtOpts, ptpClock);
 		}
 
 		// TODO: why is handle() below expiretimer, while in slave is the opposite
 		handle(rtOpts, ptpClock);
 
-		if(timerExpired(&ptpClock->timers[DELAY_RECEIPT_TIMER])) {
+		if (tmr_expired(tmrs_get(DELAY_RECEIPT_TIMER))) {
 			INFO("NO_DELAY\n");
 		}
 
@@ -1146,23 +1153,23 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		    toState(PTP_LISTENING, rtOpts, ptpClock);
 		}
 		break;
-		
+
 	default:
 		DBG("(doState) do unrecognized state\n");
 		break;
 	}
 
-	if(rtOpts->periodicUpdates && timerExpired(&ptpClock->timers[PERIODIC_INFO_TIMER])) {
+	if (rtOpts->periodicUpdates && tmr_expired(tmrs_get(PERIODIC_INFO_TIMER))) {
 		periodicUpdate(rtOpts, ptpClock);
 	}
 
-        if(rtOpts->statusLog.logEnabled && timerExpired(&ptpClock->timers[STATUSFILE_UPDATE_TIMER])) {
-                writeStatusFile(ptpClock,rtOpts,TRUE);
+	if (rtOpts->statusLog.logEnabled && tmr_expired(tmrs_get(STATUSFILE_UPDATE_TIMER))) {
+		writeStatusFile(ptpClock, rtOpts, TRUE);
 		/* ensures that the current updare interval is used */
-		timerStart(&ptpClock->timers[STATUSFILE_UPDATE_TIMER],rtOpts->statusFileUpdateInterval);
-        }
+		tmr_start(tmrs_get(STATUSFILE_UPDATE_TIMER), rtOpts->statusFileUpdateInterval);
+	}
 
-	if(rtOpts->enablePanicMode && timerExpired(&ptpClock->timers[PANIC_MODE_TIMER])) {
+	if (rtOpts->enablePanicMode && tmr_expired(tmrs_get(PANIC_MODE_TIMER))) {
 
 		DBG("Panic check\n");
 
@@ -1172,7 +1179,6 @@ doState(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			DBG("panic over!\n");
 		}
 	}
-
 }
 
 static Boolean
@@ -1566,8 +1572,8 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 		DBG("Handleannounce : disregard\n");
 		ptpClock->counters.discardedMessages++;
 		return;
-		
-	case PTP_UNCALIBRATED:	
+
+	case PTP_UNCALIBRATED:
 	case PTP_SLAVE:
 		if (isFromSelf) {
 			DBGV("HandleAnnounce : Ignore message from self \n");
@@ -1577,7 +1583,7 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 			ptpClock->counters.ignoredAnnounce++;
 			return;
 		}
-		
+
 		/*
 		 * Valid announce message is received : BMC algorithm
 		 * will be executed
@@ -1632,7 +1638,7 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 					ptpClock->clockStatus.leapInsert = FALSE;
 					ptpClock->clockStatus.leapDelete = FALSE;
 					ptpClock->clockStatus.update = TRUE;
-					
+
 				}
 			}
 
@@ -1640,14 +1646,15 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 
 	   		/* Reset Timer handling Announce receipt timeout - in anyDomain, time out from current domain first */
 			if(header->domainNumber == ptpClock->defaultDS.domainNumber) {
-	   			timerStart(&ptpClock->timers[ANNOUNCE_RECEIPT_TIMER],
-				   (ptpClock->portDS.announceReceiptTimeout) *
-				   (pow(2,ptpClock->portDS.logAnnounceInterval)));
+				tmr_start(tmrs_get(ANNOUNCE_RECEIPT_TIMER),
+					  (ptpClock->portDS.announceReceiptTimeout) *
+						  (pow(2, ptpClock->portDS.logAnnounceInterval)));
 			}
 #ifdef PTPD_STATISTICS
-		if(!timerRunning(&ptpClock->timers[STATISTICS_UPDATE_TIMER])) {
-			timerStart(&ptpClock->timers[STATISTICS_UPDATE_TIMER], rtOpts->statsUpdateInterval);
-		}
+			if (!tmr_running(tmrs_get(STATISTICS_UPDATE_TIMER))) {
+				tmr_start(tmrs_get(STATISTICS_UPDATE_TIMER),
+					  rtOpts->statsUpdateInterval);
+			}
 #endif /* PTPD_STATISTICS */
 
 			if (rtOpts->announceTimeoutGracePeriod &&
@@ -1723,9 +1730,9 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 
 			/* Reset Timer handling Announce receipt timeout: different domain my get here
 			  when using anyDomain.*/
-			timerStart(&ptpClock->timers[ANNOUNCE_RECEIPT_TIMER],
-			   (ptpClock->portDS.announceReceiptTimeout) *
-			   (pow(2,ptpClock->portDS.logAnnounceInterval)));
+			tmr_start(tmrs_get(ANNOUNCE_RECEIPT_TIMER),
+				  (ptpClock->portDS.announceReceiptTimeout) *
+					  (pow(2, ptpClock->portDS.logAnnounceInterval)));
 
 		} else {
 			/*addForeign takes care of AnnounceUnpacking*/
@@ -1738,7 +1745,7 @@ handleAnnounce(MsgHeader *header, ssize_t length,
 		}
 		break;
 
-		
+
 	case PTP_MASTER:
 	case PTP_LISTENING:           /* listening mode still causes timeouts in order to send IGMP refreshes */
 	default :
@@ -1804,7 +1811,7 @@ handleSync(const MsgHeader *header, ssize_t length,
 		DBGV("HandleSync : disregard\n");
 		ptpClock->counters.discardedMessages++;
 		return;
-		
+
 	case PTP_UNCALIBRATED:
 	case PTP_SLAVE:
 		if (isFromSelf) {
@@ -1814,10 +1821,11 @@ handleSync(const MsgHeader *header, ssize_t length,
 
 		if (isFromCurrentParent(ptpClock, header)) {
 			ptpClock->counters.syncMessagesReceived++;
-			timerStart(&ptpClock->timers[SYNC_RECEIPT_TIMER], max(
-			    (ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-			    MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logSyncInterval))
-			));
+			tmr_start(tmrs_get(SYNC_RECEIPT_TIMER),
+				  max((ptpClock->portDS.announceReceiptTimeout) *
+					      (pow(2, ptpClock->portDS.logAnnounceInterval)),
+				      MISSED_MESSAGES_MAX *
+					      (pow(2, ptpClock->portDS.logSyncInterval))));
 
 			/* We only start our own delayReq timer after receiving the first sync */
 			if (ptpClock->syncWaiting) {
@@ -1826,11 +1834,11 @@ handleSync(const MsgHeader *header, ssize_t length,
 				NOTICE("Received first Sync from Master\n");
 
 				if (ptpClock->portDS.delayMechanism == E2E)
-					timerStart(&ptpClock->timers[DELAYREQ_INTERVAL_TIMER],
-						   pow(2,ptpClock->portDS.logMinDelayReqInterval));
+					tmr_start(tmrs_get(DELAYREQ_INTERVAL_TIMER),
+						  pow(2, ptpClock->portDS.logMinDelayReqInterval));
 				else if (ptpClock->portDS.delayMechanism == P2P)
-					timerStart(&ptpClock->timers[PDELAYREQ_INTERVAL_TIMER],
-						   pow(2,ptpClock->portDS.logMinPdelayReqInterval));
+					tmr_start(tmrs_get(PDELAYREQ_INTERVAL_TIMER),
+						  pow(2, ptpClock->portDS.logMinPdelayReqInterval));
 			} else if ( rtOpts->syncSequenceChecking ) {
 				if(  (ptpClock->counters.consecutiveSequenceErrors < MAX_SEQ_ERRORS) &&
 					((((UInteger16)(ptpClock->recvSyncSequenceId + 32768)) >
@@ -1863,7 +1871,7 @@ handleSync(const MsgHeader *header, ssize_t length,
 				&& ptpClock->parentGrants->grantData[SYNC_INDEXED].granted) {
 				ptpClock->portDS.logSyncInterval =  ptpClock->parentGrants->grantData[SYNC_INDEXED].logInterval;
 			}
-			
+
 
 			recordSync(header->sequenceId, tint);
 
@@ -1876,7 +1884,7 @@ handleSync(const MsgHeader *header, ssize_t length,
 					DBG("Received Sync while waiting for follow-up - "
 					    "will wait for another %d messages\n",
 					    MAX_FOLLOWUP_GAP - ptpClock->followUpGap);
-					    break;		  
+					    break;
 				    }
 					DBG("No follow-up for %d sync - waiting for new follow-up\n",
 					    ptpClock->followUpGap);
@@ -1915,7 +1923,7 @@ handleSync(const MsgHeader *header, ssize_t length,
 					updateClock(rtOpts,ptpClock);
 				}
 				ptpClock->offsetUpdates++;
-				
+
 				ptpClock->defaultDS.twoStepFlag=FALSE;
 				break;
 			}
@@ -2020,8 +2028,8 @@ handleFollowUp(const MsgHeader *header, ssize_t length,
 		DBGV("Handfollowup : disregard\n");
 		ptpClock->counters.discardedMessages++;
 		return;
-		
-	case PTP_UNCALIBRATED:	
+
+	case PTP_UNCALIBRATED:
 	case PTP_SLAVE:
 		if (isFromCurrentParent(ptpClock, header)) {
 			ptpClock->counters.followUpMessagesReceived++;
@@ -2123,10 +2131,10 @@ handleDelayReq(const MsgHeader *header, ssize_t length,
 		    }
 
 		}
-	
+
 
 		DBG("delayReq message received : \n");
-		
+
 		if (length < DELAY_REQ_LENGTH) {
 			DBG("Error: DelayReq message too short\n");
 			ptpClock->counters.messageFormatErrors++;
@@ -2223,7 +2231,7 @@ processDelayReqFromSelf(const TimeInternal * tint, const RunTimeOpts * rtOpts, P
 	DBGV("processDelayReqFromSelf: %s %d\n",
 	    dump_TimeInternal(&ptpClock->delay_req_send_time),
 	    rtOpts->outboundLatency);
-	
+
 }
 
 static void
@@ -2279,9 +2287,13 @@ handleDelayResp(const MsgHeader *header, ssize_t length,
 				DBG("==> Handle DelayResp (%d)\n",
 					 header->sequenceId);
 
-				timerStart(&ptpClock->timers[DELAY_RECEIPT_TIMER], max(
-				    (ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-					MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logMinDelayReqInterval))));
+				tmr_start(
+					tmrs_get(DELAY_RECEIPT_TIMER),
+					max((ptpClock->portDS.announceReceiptTimeout) *
+						    (pow(2, ptpClock->portDS.logAnnounceInterval)),
+					    MISSED_MESSAGES_MAX *
+						    (pow(2,
+							 ptpClock->portDS.logMinDelayReqInterval))));
 
 				if (!ptpClock->waitingForDelayResp) {
 					DBG("Ignored DelayResp sequence %d - wasn't waiting for one\n",
@@ -2327,7 +2339,7 @@ handleDelayResp(const MsgHeader *header, ssize_t length,
 						ptpClock->portDS.logMinDelayReqInterval,
 					header->logMessageInterval);
                         	    if (ptpClock->portDS.logMinDelayReqInterval != header->logMessageInterval) {
-			
+
                     			if(header->logMessageInterval == UNICAST_MESSAGEINTERVAL &&
 						rtOpts->autoDelayReqInterval) {
 
@@ -2345,7 +2357,7 @@ handleDelayResp(const MsgHeader *header, ssize_t length,
 						    }
 						    ptpClock->portDS.logMinDelayReqInterval = rtOpts->logMinDelayReqInterval;
 
-						}	
+						}
 					} else {
 						/* Accept new DelayReq value from the Master */
 
@@ -2366,16 +2378,20 @@ handleDelayResp(const MsgHeader *header, ssize_t length,
 					ptpClock->portDS.logMinDelayReqInterval = rtOpts->logMinDelayReqInterval;
 				}
 				/* arm the timer again now that we have the correct delayreq interval */
-				timerStart(&ptpClock->timers[DELAY_RECEIPT_TIMER], max(
-				    (ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-					MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logMinDelayReqInterval))));
+				tmr_start(
+					tmrs_get(DELAY_RECEIPT_TIMER),
+					max((ptpClock->portDS.announceReceiptTimeout) *
+						    (pow(2, ptpClock->portDS.logAnnounceInterval)),
+					    MISSED_MESSAGES_MAX *
+						    (pow(2,
+							 ptpClock->portDS.logMinDelayReqInterval))));
 			} else {
 
 				DBG("HandledelayResp : delayResp doesn't match with the delayReq. \n");
 				ptpClock->counters.discardedMessages++;
 				break;
 			}
-			
+
 			ptpClock->delayRespWaiting = FALSE;
 		}
 	} else if (ptpClock->portDS.delayMechanism == P2P) { /* (Peer to Peer mode) */
@@ -2445,7 +2461,7 @@ handlePdelayReq(MsgHeader *header, ssize_t length,
 				msgUnpackHeader(ptpClock->msgIbuf,
 						&ptpClock->PdelayReqHeader);
 				issuePdelayResp(tint, header, sourceAddress, rtOpts,
-						ptpClock);	
+						ptpClock);
 				break;
 			}
 		default:
@@ -2498,7 +2514,7 @@ handlePdelayResp(const MsgHeader *header, TimeInternal *tint,
 		/* Boolean isFromCurrentParent = FALSE; NOTE: This is never used in this function */
 		TimeInternal requestReceiptTimestamp;
 		TimeInternal correctionField;
-	
+
 		DBG("PdelayResp message received : \n");
 
 		if (length < PDELAY_RESP_LENGTH) {
@@ -2564,7 +2580,7 @@ handlePdelayResp(const MsgHeader *header, TimeInternal *tint,
 						ptpClock->portDS.logMinPdelayReqInterval,
 					header->logMessageInterval);
                         	    if (ptpClock->portDS.logMinPdelayReqInterval != header->logMessageInterval) {
-			
+
                     			if(header->logMessageInterval == UNICAST_MESSAGEINTERVAL &&
 						rtOpts->autoDelayReqInterval) {
 
@@ -2582,7 +2598,7 @@ handlePdelayResp(const MsgHeader *header, TimeInternal *tint,
 						    }
 						    ptpClock->portDS.logMinPdelayReqInterval = rtOpts->logMinPdelayReqInterval;
 
-						}	
+						}
 					} else {
 						/* Accept new DelayReq value from the Master */
 
@@ -2600,12 +2616,18 @@ handlePdelayResp(const MsgHeader *header, TimeInternal *tint,
 					}
 					ptpClock->portDS.logMinPdelayReqInterval = rtOpts->logMinPdelayReqInterval;
 				}
-				
+
 				}
 	                    		ptpClock->delayRespWaiting = FALSE;
-					timerStart(&ptpClock->timers[DELAY_RECEIPT_TIMER], max(
-					    (ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-						MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logMinPdelayReqInterval))));
+					tmr_start(
+						tmrs_get(DELAY_RECEIPT_TIMER),
+						max((ptpClock->portDS.announceReceiptTimeout) *
+							    (pow(2, ptpClock->portDS
+									    .logAnnounceInterval)),
+						    MISSED_MESSAGES_MAX *
+							    (pow(2,
+								 ptpClock->portDS
+									 .logMinPdelayReqInterval))));
 				}
 
 				ptpClock->recvPdelayRespSequenceId = header->sequenceId;
@@ -2654,15 +2676,15 @@ handlePdelayRespFollowUp(const MsgHeader *header, ssize_t length,
 	if (ptpClock->portDS.delayMechanism == P2P) {
 		TimeInternal responseOriginTimestamp;
 		TimeInternal correctionField;
-	
+
 		DBG("PdelayRespfollowup message received : \n");
-	
+
 		if(length < PDELAY_RESP_FOLLOW_UP_LENGTH) {
 			DBG("Error: PdelayRespfollowup message too short\n");
 			ptpClock->counters.messageFormatErrors++;
 			return;
-		}	
-	
+		}
+
 		switch(ptpClock->portDS.portState) {
 		case PTP_INITIALIZING:
 		case PTP_FAULTY:
@@ -2671,7 +2693,7 @@ handlePdelayRespFollowUp(const MsgHeader *header, ssize_t length,
 			DBGV("HandlePdelayResp : disregard\n");
 			ptpClock->counters.discardedMessages++;
 			return;
-		
+
 		case PTP_SLAVE:
 		case PTP_MASTER:
 			if (isFromSelf) {
@@ -2702,7 +2724,7 @@ handlePdelayRespFollowUp(const MsgHeader *header, ssize_t length,
 						ptpClock->portDS.logMinPdelayReqInterval,
 					header->logMessageInterval);
                         	    if (ptpClock->portDS.logMinPdelayReqInterval != header->logMessageInterval) {
-			
+
                     			if(header->logMessageInterval == UNICAST_MESSAGEINTERVAL &&
 						rtOpts->autoDelayReqInterval) {
 
@@ -2720,7 +2742,7 @@ handlePdelayRespFollowUp(const MsgHeader *header, ssize_t length,
 						    }
 						    ptpClock->portDS.logMinPdelayReqInterval = rtOpts->logMinPdelayReqInterval;
 
-						}	
+						}
 					} else {
 						/* Accept new DelayReq value from the Master */
 
@@ -2741,12 +2763,14 @@ handlePdelayRespFollowUp(const MsgHeader *header, ssize_t length,
 
 /* pdelay interval handling end */
 			}
-                    		ptpClock->delayRespWaiting = FALSE;	
-				timerStart(&ptpClock->timers[DELAY_RECEIPT_TIMER], max(
-					(ptpClock->portDS.announceReceiptTimeout) * (pow(2,ptpClock->portDS.logAnnounceInterval)),
-					MISSED_MESSAGES_MAX * (pow(2,ptpClock->portDS.logMinPdelayReqInterval))));
+			ptpClock->delayRespWaiting = FALSE;
+			tmr_start(tmrs_get(DELAY_RECEIPT_TIMER),
+				  max((ptpClock->portDS.announceReceiptTimeout) *
+					      (pow(2, ptpClock->portDS.logAnnounceInterval)),
+				      MISSED_MESSAGES_MAX *
+					      (pow(2, ptpClock->portDS.logMinPdelayReqInterval))));
 
-				break;
+			break;
 			} else {
 				DBG("PdelayRespFollowup: sequence mismatch - Received: %d "
 				"PdelayReq sent: %d, PdelayResp received: %d\n",
@@ -3041,7 +3065,7 @@ issueFollowup(const TimeInternal *tint,const RunTimeOpts *rtOpts,PtpClock *ptpCl
 	Timestamp preciseOriginTimestamp;
 	ti_to_timestamp(tint, &preciseOriginTimestamp);
 
-	msgPackFollowUp(ptpClock->msgObuf,&preciseOriginTimestamp,ptpClock,sequenceId);	
+	msgPackFollowUp(ptpClock->msgObuf,&preciseOriginTimestamp,ptpClock,sequenceId);
 
 	if (!netSendGeneral(ptpClock->msgObuf,FOLLOW_UP_LENGTH,
 			    &ptpClock->netPath, rtOpts, dst)) {
@@ -3102,7 +3126,7 @@ issueDelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 		DBGV("delayReq message can't be sent -> FAULTY state \n");
 	} else {
 		DBGV("DelayReq MSG sent ! \n");
-		
+
 #ifdef SO_TIMESTAMPING
 
 #ifdef PTPD_PCAP
@@ -3122,8 +3146,8 @@ issueDelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 #if defined(__QNXNTO__) && defined(PTPD_EXPERIMENTAL)
 			if (respectUtcOffset(rtOpts, ptpClock) == TRUE) {
 				internalTime.seconds += ptpClock->timePropertiesDS.currentUtcOffset;
-			}			
-			
+			}
+
 			processDelayReqFromSelf(&internalTime, rtOpts, ptpClock);
 #endif
 
@@ -3135,11 +3159,10 @@ issueDelayReq(const RunTimeOpts *rtOpts,PtpClock *ptpClock)
 
 		/* Explicitly re-arm timer for sending the next delayReq
 		 * 9.5.11.2: arm the timer with a uniform range from 0 to 2 x interval
-		 * this is only ever used here, so removed the timerStart_random function
 		 */
 
-		timerStart(&ptpClock->timers[DELAYREQ_INTERVAL_TIMER],
-		   pow(2,ptpClock->portDS.logMinDelayReqInterval) * getRand() * 2.0);
+		tmr_start(tmrs_get(DELAYREQ_INTERVAL_TIMER),
+			  pow(2, ptpClock->portDS.logMinDelayReqInterval) * getRand() * 2.0);
 #if 0 /* PCAP ONLY */
 		msgUnpackHeader(ptpClock->msgObuf, &ourDelayReq);
 		handleDelayReq(&ourDelayReq, DELAY_REQ_LENGTH, &internalTime,

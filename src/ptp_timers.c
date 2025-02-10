@@ -24,6 +24,8 @@
 
 #include "ptpd.h"
 
+#if 0
+
 void
 timerStop(IntervalTimer * itimer)
 {
@@ -139,3 +141,5 @@ void timerShutdown(IntervalTimer *itimers)
     shutdownEventTimers();
 
 }
+
+#endif
