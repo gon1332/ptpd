@@ -180,9 +180,6 @@
 #include "dep/constants_dep.h"
 #include "dep/datatypes_dep.h"
 
-#include "ptp_timers.h"
-#include "dep/eventtimer.h"
-
 #include "dep/ntpengine/ntpdcontrol.h"
 #include "dep/ntpengine/ntp_isc_md5.h"
 
