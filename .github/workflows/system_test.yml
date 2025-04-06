@@ -1,7 +1,9 @@
 name: System Test
 
 on:
-  push: {}
+  push:
+    branches:
+      - master
   pull_request: {}
 
 jobs:
