@@ -40,7 +40,7 @@
     {
       "name": "ut",
       "configurePreset": "ut",
-      "targets": ["test_time_ops"]
+      "targets": ["test_time_ops", "test_list", "test_timer"]
     },
     {
       "name": "package",

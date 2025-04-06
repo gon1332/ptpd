@@ -34,6 +34,7 @@
  */
 
 #include "../ptpd.h"
+#include "timer_collection.h"
 
 #define CLAMP(var,bound) {\
     if(var < -bound) {\
@@ -881,7 +882,7 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			else
 				CRITICAL("Panic mode timeout - accepting current offset. Clock will step.\n");
 			ptpClock->panicOver = FALSE;
-			timerStop(&ptpClock->timers[PANIC_MODE_TIMER]);
+			tmr_stop(tmrs_get(PANIC_MODE_TIMER));
 			ptpClock->clockControl.available = TRUE;
 			ptpClock->clockControl.stepRequired = TRUE;
 			ptpClock->clockControl.updateOK = TRUE;
@@ -895,7 +896,7 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			 ti_to_double(&ptpClock->currentDS.offsetFromMaster));
 		ptpClock->panicMode = TRUE;
 		ptpClock->panicModeTimeLeft = 6 * rtOpts->panicModeDuration;
-		timerStart(&ptpClock->timers[PANIC_MODE_TIMER], 10);
+		tmr_start(tmrs_get(PANIC_MODE_TIMER), 10);
 		/* do not release if not configured to do so */
 		if(rtOpts->panicModeReleaseClock) {
 			ptpClock->clockControl.available = FALSE;
@@ -913,7 +914,7 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 		if (rtOpts->panicModeExitThreshold == 0) {
 			ptpClock->panicMode = FALSE;
 			ptpClock->panicOver = FALSE;
-			timerStop(&ptpClock->timers[PANIC_MODE_TIMER]);
+			tmr_stop(tmrs_get(PANIC_MODE_TIMER));
 			NOTICE("Offset below 1 second again: resuming clock control\n");
 			/* we can control the clock again */
 			ptpClock->clockControl.available = TRUE;
@@ -921,7 +922,7 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			   rtOpts->panicModeExitThreshold) {
 			ptpClock->panicMode = FALSE;
 			ptpClock->panicOver = FALSE;
-			timerStop(&ptpClock->timers[PANIC_MODE_TIMER]);
+			tmr_stop(tmrs_get(PANIC_MODE_TIMER));
 			NOTICE("Offset below %d ns threshold: resuming clock control\n",
 				    ptpClock->currentDS.offsetFromMaster.nanoseconds);
 			/* we can control the clock again */
@@ -931,12 +932,13 @@ void checkOffset(const RunTimeOpts *rtOpts, PtpClock *ptpClock)
 
 	/* can this even happen if offset is < 1 sec? */
 	if(rtOpts->enablePanicMode && ptpClock->panicOver) {
-			ptpClock->panicMode = FALSE;
-			ptpClock->panicOver = FALSE;
-			timerStop(&ptpClock->timers[PANIC_MODE_TIMER]);
-			NOTICE("Panic mode timeout and offset below 1 second again: resuming clock control\n");
-			/* we can control the clock again */
-			ptpClock->clockControl.available = TRUE;
+		ptpClock->panicMode = FALSE;
+		ptpClock->panicOver = FALSE;
+		tmr_stop(tmrs_get(PANIC_MODE_TIMER));
+		NOTICE("Panic mode timeout and offset below 1 second again: resuming clock "
+		       "control\n");
+		/* we can control the clock again */
+		ptpClock->clockControl.available = TRUE;
 	}
 
 
@@ -1005,7 +1007,7 @@ updateClock(const RunTimeOpts * rtOpts, PtpClock * ptpClock)
 	/* Clock has been updated - or was eligible for an update - restart the timeout timer*/
 	if(rtOpts->clockUpdateTimeout > 0) {
 		DBG("Restarted clock update timeout timer\n");
-		timerStart(&ptpClock->timers[CLOCK_UPDATE_TIMER],rtOpts->clockUpdateTimeout);
+		tmr_start(tmrs_get(CLOCK_UPDATE_TIMER), rtOpts->clockUpdateTimeout);
 	}
 
 	ptpClock->pastStartup = TRUE;

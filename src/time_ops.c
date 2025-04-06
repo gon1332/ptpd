@@ -162,3 +162,21 @@ ti_seconds(const TimeInternal *t)
 {
 	return t->nanoseconds / NSEC_IN_SEC;
 }
+
+int32_t
+ti_milliseconds_part(const TimeInternal *t)
+{
+	return (t->nanoseconds / 1000000) % 1000;
+}
+
+int32_t
+ti_microseconds_part(const TimeInternal *t)
+{
+	return (t->nanoseconds / 1000) % 1000;
+}
+
+int32_t
+ti_nanoseconds_part(const TimeInternal *t)
+{
+	return t->nanoseconds % 1000;
+}

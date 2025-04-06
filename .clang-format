@@ -18,7 +18,14 @@ AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: AllDefinitions # Based on current PTPd style
 AlwaysBreakBeforeMultilineStrings: false
 BasedOnStyle: LLVM
-BreakBeforeBraces: Linux
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterEnum: true
+  AfterStruct: true
+  AfterClass: true
+  AfterFunction: true
+  AfterObjCDeclaration: true
+  AfterNamespace: true
 BinPackArguments: true
 BinPackParameters: true
 BitFieldColonSpacing: After

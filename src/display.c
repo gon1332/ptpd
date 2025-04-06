@@ -33,6 +33,7 @@
  */
 
 #include "ptpd.h"
+#include "timer_collection.h"
 
 /**\brief Display an Integer64 type*/
 void
@@ -108,10 +109,10 @@ netPath_display(const NetPath * net)
 
 /**\brief Display a IntervalTimer Structure*/
 void
-intervalTimer_display(const IntervalTimer * ptimer)
+intervalTimer_display(const struct tmr *t)
 {
-	DBGV("interval : %.06f \n", ptimer->interval);
-	DBGV("expire : %d \n", ptimer->expired);
+	DBGV("interval : %.06f \n", t->interval());
+	DBGV("expire : %d \n", t->expired);
 }
 
 /**\brief Display a TimeInterval Structure*/
@@ -741,9 +742,9 @@ displayOthers(const PtpClock * ptpClock)
 	DBGV("message activity %d \n", ptpClock->message_activity);
 	DBGV("\n");
 
-	for (i = 0; i < PTP_MAX_TIMER; i++) {
+	for (i = 0; i < tmrs_size(); i++) {
 		DBGV("%s : \n", timer[i]);
-		intervalTimer_display(&ptpClock->timers[i]);
+		intervalTimer_display(tmrs_get(i));
 		DBGV("\n");
 	}
 

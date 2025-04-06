@@ -38,11 +38,14 @@
 
 #include "../ptpd.h"
 
+#include "timer_collection.h"
+
 /*
  * valgrind 3.5.0 currently reports no errors (last check: 20110512)
  * valgrind 3.4.1 lacks an adjtimex handler
  *
- * to run:   sudo valgrind --show-reachable=yes --leak-check=full --track-origins=yes -- ./ptpd2 -c ...
+ * to run:   sudo valgrind --show-reachable=yes --leak-check=full --track-origins=yes -- ./ptpd2 -c
+ * ...
  */
 
 /*
@@ -598,7 +601,7 @@ ptpdShutdown(PtpClock * ptpClock)
 	if(rtOpts.cliConfig != NULL)
 		dictionary_del(&rtOpts.cliConfig);
 
-	timerShutdown(ptpClock->timers);
+	tmrs_destroy();
 
 	free(ptpClock);
 	ptpClock = NULL;
@@ -891,7 +894,12 @@ configcheck:
 #endif
 
 	/* set up timers */
-	if(!timerSetup(ptpClock->timers)) {
+#ifdef HAVE_POSIX_TIMER
+	enum tmr_type timer_type = TIMER_POSIX;
+#else
+	enum tmr_type timer_type = TIMER_ITIMER;
+#endif /* HAVE_POSIX_TIMER */
+	if (!tmrs_create(timer_type)) {
 		PERROR("failed to set up event timers");
 		*ret = 2;
 		free(ptpClock);

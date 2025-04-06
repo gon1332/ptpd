@@ -615,7 +615,6 @@ typedef struct {
 
 	Boolean message_activity;
 
-	IntervalTimer   timers[PTP_MAX_TIMER];
 	AlarmEntry	alarms[ALRM_MAX];
 	int alarmDelay;
 
