@@ -13,24 +13,19 @@
 #define TIMER_H_
 
 #include <stdbool.h>
+#include "impl.h"
 
 /**
- * Forward declaration
+ * Forward declaration of the timer type
  */
 struct tmr;
 
-enum tmr_type
-{
-	TIMER_POSIX,
-	TIMER_ITIMER
-};
-
 /**
  * @brief Creates a disarmed timer
- * @param type The type of timer to create
+ * @param impl Specify the timer implementation
  * @returns The created timer object, otherwise NULL
  */
-struct tmr *tmr_create(enum tmr_type type);
+struct tmr *tmr_create(const struct impl *impl);
 
 /**
  * @brief Destroys the timer

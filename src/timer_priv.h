@@ -14,11 +14,8 @@
 
 #include <stdbool.h>
 
-#include "timer.h"
-
 struct tmr
 {
-	enum tmr_type type;
 	void (*start)(struct tmr *, double);
 	void (*stop)(struct tmr *);
 	bool (*running)(struct tmr *);
