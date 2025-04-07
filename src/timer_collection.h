@@ -12,7 +12,7 @@
 #define TIMER_COLLECTION_H_
 
 #include <stdbool.h>
-#include "timer.h"
+#include "impl.h"
 
 enum ptp_timer_type
 {
@@ -46,10 +46,10 @@ struct tmr *tmrs_get(enum ptp_timer_type type);
 
 /**
  * @brief Creates all the PTP timers listed in enum ptp_timer_type
- * @param type Specify the timer implementation
+ * @param impl Specify the timer implementation
  * @return true if all the timers have been created
  */
-bool tmrs_create(enum tmr_type type);
+bool tmrs_create(const struct impl *impl);
 
 /**
  * @return The number of timers

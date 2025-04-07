@@ -69,9 +69,9 @@ static struct tmr *lut[PTP_MAX_TIMER];
  * @return true if all timers have been created successfully
  */
 static bool
-tmrs_emplace(enum ptp_timer_type which, enum tmr_type type)
+tmrs_emplace(enum ptp_timer_type which, const struct impl *impl)
 {
-	lut[which] = tmr_create(type);
+	lut[which] = tmr_create(impl);
 	return lut[which] != NULL;
 }
 
@@ -93,11 +93,11 @@ tmrs_get(enum ptp_timer_type which)
 }
 
 bool
-tmrs_create(enum tmr_type type)
+tmrs_create(const struct impl *impl)
 {
 	unsigned i;
 	for (i = 0; i < PTP_MAX_TIMER; i++) {
-		if (!tmrs_emplace(i, type)) {
+		if (!tmrs_emplace(i, impl)) {
 			goto fail;
 		}
 	}

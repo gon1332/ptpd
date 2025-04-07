@@ -894,12 +894,7 @@ configcheck:
 #endif
 
 	/* set up timers */
-#ifdef HAVE_POSIX_TIMER
-	enum tmr_type timer_type = TIMER_POSIX;
-#else
-	enum tmr_type timer_type = TIMER_ITIMER;
-#endif /* HAVE_POSIX_TIMER */
-	if (!tmrs_create(timer_type)) {
+	if (!tmrs_create(&g_impl)) {
 		PERROR("failed to set up event timers");
 		*ret = 2;
 		free(ptpClock);

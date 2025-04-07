@@ -11,24 +11,13 @@
 
 #include "timer.h"
 #include <assert.h>
-#include <stdlib.h>
 #include "ptpd_config.h"
-#include "timer_itimer.h"
-#include "timer_posix.h"
 #include "timer_priv.h"
 
 struct tmr *
-tmr_create(enum tmr_type type)
+tmr_create(const struct impl *impl)
 {
-	if (type == TIMER_ITIMER) {
-		return tmr_itimer_create();
-	}
-#ifdef HAVE_POSIX_TIMER
-	if (type == TIMER_POSIX) {
-		return tmr_posix_create();
-	}
-#endif /* HAVE_POSIX_TIMER */
-	return NULL;
+	return impl->tmr_create();
 }
 
 void

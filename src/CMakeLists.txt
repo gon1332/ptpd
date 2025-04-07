@@ -4,13 +4,13 @@ add_library(core OBJECT
         time_ops.c
         timer.c
         timer_collection.c
-        timer_itimer.c
-        $<$<BOOL:${HAVE_POSIX_TIMER}>:timer_posix.c>
 )
 target_include_directories(core
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/lib
 )
+
+add_subdirectory(unix)
 
 add_executable(ptpd2
         arith.c
@@ -49,6 +49,7 @@ target_link_libraries(ptpd2 PUBLIC
         core
         m
         "$<$<BOOL:${SNMP}>:netsnmp;netsnmpagent;netsnmpmibs>"
+        unix
 )
 target_compile_options(ptpd2 PUBLIC
         -Wall
