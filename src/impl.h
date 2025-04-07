@@ -12,6 +12,8 @@
 #ifndef IMPL_H_
 #define IMPL_H_
 
+#include "ptp_datatypes.h"
+
 struct impl
 {
 	/**
@@ -20,6 +22,9 @@ struct impl
 	 */
 	struct tmr *(*tmr_create)(void);
 	/** @ */
+
+	void (*sleep_for)(double duration);
+	int (*set_cpu_affinity)(int cpu);
 };
 
 /**

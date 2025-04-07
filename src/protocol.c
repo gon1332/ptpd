@@ -230,7 +230,7 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			     * until next retry, do not exit. Wait in chunks so SIGALRM can interrupt.
 			     */
 			    if(ptpClock->initFailure) {
-				    usleep(10000);
+				    g_impl.sleep_for(0.01);
 				    ptpClock->initFailureTimeout--;
 			    }
 

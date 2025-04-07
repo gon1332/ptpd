@@ -1003,7 +1003,7 @@ cancelNodeGrants(UnicastGrantTable *nodeTable, const RunTimeOpts *rtOpts, PtpClo
 	if(grantData->granted) {
 	    cancelUnicastTransmission(grantData, rtOpts, ptpClock);
 	    /* sleep 250 to 500 us so that we don't flood the node */
-	    usleep(250+round(getRand()*250));
+	    g_impl.sleep_for((250 + round(getRand() * 250)) * 1e-6);
 	}
 
     }

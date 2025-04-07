@@ -706,11 +706,11 @@ getTxTimestamp(NetPath* netPath,TimeInternal* timeStamp) {
 		DBG("getTxTimestamp: SO_TIMESTAMPING - delayed TX timestamp caught\n");
 		return TRUE;
 	    }
-	    usleep(10);
+	    g_impl.sleep_for(10 * 1e-6);
 	}
 
 	/* try for the last time: sleep and poll the error queue, if nothing, consider SO_TIMESTAMPING inoperable */
-	usleep(LATE_TXTIMESTAMP_US);
+	g_impl.sleep_for(LATE_TXTIMESTAMP_US * 1e-6);
 
 	length = netRecvEvent(G_ptpClock->msgIbuf, timeStamp, netPath, MSG_ERRQUEUE);
 
@@ -2266,7 +2266,7 @@ netRefreshIGMP(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpCloc
 	}
 
 	/* suspend process 100 milliseconds, to make sure the kernel sends the IGMP_leave properly */
-	usleep(100*1000);
+	g_impl.sleep_for(0.1);
 
 	if (!netInitMulticast(netPath, rtOpts)) {
 		return FALSE;

@@ -1,5 +1,6 @@
 add_library(unix OBJECT
         impl.c
+        sys.c
         timer_itimer.c
         $<$<BOOL:${HAVE_POSIX_TIMER}>:timer_posix.c>
 )

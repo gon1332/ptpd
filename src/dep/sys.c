@@ -1389,20 +1389,6 @@ recordSync(UInteger16 sequenceId, TimeInternal * time)
 	}
 }
 
-Boolean
-nanoSleep(TimeInternal * t)
-{
-	struct timespec ts, tr;
-
-	ti_to_timespec(t, &ts);
-
-	if (nanosleep(&ts, &tr) < 0) {
-		ti_to_timespec(t, &tr);
-		return FALSE;
-	}
-	return TRUE;
-}
-
 #ifdef __QNXNTO__
 
 static const struct sigevent* timerIntHandler(void* data, int id) {
@@ -2576,83 +2562,4 @@ updateXtmp (TimeInternal oldTime, TimeInternal newTime)
 
 #endif /* HAVE_UTMP_H */
 #endif /* HAVE_UTMPX_H */
-
-}
-
-int setCpuAffinity(int cpu) {
-
-#ifdef __QNXNTO__
-    unsigned    num_elements = 0;
-    int         *rsizep, masksize_bytes, size;
-    int    *rmaskp, *imaskp;
-    void        *my_data;
-    uint32_t cpun;
-    num_elements = RMSK_SIZE(_syspage_ptr->num_cpu);
-
-    masksize_bytes = num_elements * sizeof(unsigned);
-
-    size = sizeof(int) + 2 * masksize_bytes;
-    if ((my_data = malloc(size)) == NULL) {
-        return -1;
-    } else {
-        memset(my_data, 0x00, size);
-
-        rsizep = (int *)my_data;
-        rmaskp = rsizep + 1;
-        imaskp = rmaskp + num_elements;
-
-        *rsizep = num_elements;
-
-	if(cpu > _syspage_ptr->num_cpu) {
-	    return -1;
-	}
-
-	if(cpu >= 0) {
-	    cpun = (uint32_t)cpu;
-	    RMSK_SET(cpun, rmaskp);
-    	    RMSK_SET(cpun, imaskp);
-	} else {
-		for(cpun = 0;  cpun < num_elements; cpun++) {
-		    RMSK_SET(cpun, rmaskp);
-		    RMSK_SET(cpun, imaskp);
-		}
-	}
-	int ret = ThreadCtl( _NTO_TCTL_RUNMASK_GET_AND_SET_INHERIT, my_data);
-	free(my_data);
-	return ret;
-    }
-
-#endif
-
-#ifdef HAVE_SYS_CPUSET_H
-	cpuset_t mask;
-    	CPU_ZERO(&mask);
-	if(cpu >= 0) {
-    	    CPU_SET(cpu,&mask);
-	} else {
-		int i;
-		for(i = 0;  i < CPU_SETSIZE; i++) {
-			CPU_SET(i, &mask);
-		}
-	}
-    	return(cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID,
-			      -1, sizeof(mask), &mask));
-#endif /* HAVE_SYS_CPUSET_H */
-
-#if defined(linux) && defined(HAVE_SCHED_H)
-	cpu_set_t mask;
-	CPU_ZERO(&mask);
-	if(cpu >= 0) {
-	    CPU_SET(cpu,&mask);
-	} else {
-		int i;
-		for(i = 0;  i < CPU_SETSIZE; i++) {
-			CPU_SET(i, &mask);
-		}
-	}
-	return sched_setaffinity(0, sizeof(mask), &mask);
-#endif /* linux && HAVE_SCHED_H */
-
-return -1;
-
 }
