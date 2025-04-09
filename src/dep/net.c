@@ -36,6 +36,7 @@
  */
 
 #include "../ptpd.h"
+#include "utils.h"
 
 #ifdef PTPD_PCAP
 #ifdef HAVE_PCAP_PCAP_H
@@ -706,11 +707,11 @@ getTxTimestamp(NetPath* netPath,TimeInternal* timeStamp) {
 		DBG("getTxTimestamp: SO_TIMESTAMPING - delayed TX timestamp caught\n");
 		return TRUE;
 	    }
-	    g_impl.sleep_for(10 * 1e-6);
+	    g_impl.sleep_for(us(10));
 	}
 
 	/* try for the last time: sleep and poll the error queue, if nothing, consider SO_TIMESTAMPING inoperable */
-	g_impl.sleep_for(LATE_TXTIMESTAMP_US * 1e-6);
+	g_impl.sleep_for(us(LATE_TXTIMESTAMP_US));
 
 	length = netRecvEvent(G_ptpClock->msgIbuf, timeStamp, netPath, MSG_ERRQUEUE);
 
@@ -2266,7 +2267,7 @@ netRefreshIGMP(NetPath * netPath, const RunTimeOpts * rtOpts, PtpClock * ptpCloc
 	}
 
 	/* suspend process 100 milliseconds, to make sure the kernel sends the IGMP_leave properly */
-	g_impl.sleep_for(0.1);
+	g_impl.sleep_for(ms(100));
 
 	if (!netInitMulticast(netPath, rtOpts)) {
 		return FALSE;

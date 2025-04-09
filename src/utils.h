@@ -23,11 +23,21 @@
 #define CONTAINER_OF(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type, member)))
 
 /**
- * @brief Evaluates to the maximum number of the two provided
- *
  * @param a First number to compare
  * @param b Second number to compare
+ * @returns The maximum floating number of the two provided
  */
-#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+static inline double max_f(double a, double b) { return a > b ? a : b; }
+
+/**
+ * @param a First number to compare
+ * @param b Second number to compare
+ * @returns The maximum unsigned integer of the two provided
+ */
+static inline uint32_t max_d(uint32_t a, uint32_t b) { return a > b ? a : b; }
+
+static inline double ms(double v) { return v * 1e-3; }
+static inline double us(double v) { return v * 1e-6; }
+static inline double ns(double v) { return v * 1e-9; }
 
 #endif /* UTILS_H_ */

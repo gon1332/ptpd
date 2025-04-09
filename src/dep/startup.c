@@ -39,6 +39,7 @@
 #include "../ptpd.h"
 
 #include "timer_collection.h"
+#include "utils.h"
 
 /*
  * valgrind 3.5.0 currently reports no errors (last check: 20110512)
@@ -869,7 +870,7 @@ configcheck:
 			/* Once we've been reaped by init, parent PID will be 1 */
 			if(getppid() == 1)
 				break;
-			g_impl.sleep_for(1e-6);
+			g_impl.sleep_for(us(1));
 		}
 	}
 
