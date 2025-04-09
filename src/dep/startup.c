@@ -178,19 +178,20 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock)
                 NOTIFY("Applying CPU binding configuration: changing selected CPU core\n");
 
 		if (g_impl.set_cpu_affinity(tmpOpts.cpuNumber) < 0) {
-			if(tmpOpts.cpuNumber == -1) {
-                                ERROR("Could not unbind from CPU core %d\n", rtOpts->cpuNumber);
-                        } else {
-                                ERROR("Could bind to CPU core %d\n", tmpOpts.cpuNumber);
-                        }
+			if (tmpOpts.cpuNumber == -1) {
+				ERROR("Could not unbind from CPU core %d\n", rtOpts->cpuNumber);
+			} else {
+				ERROR("Could bind to CPU core %d\n", tmpOpts.cpuNumber);
+			}
 			reloadSuccessful = FALSE;
 		} else {
-			if(tmpOpts.cpuNumber > -1)
-                                INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", tmpOpts.cpuNumber);
-                        else
-                                INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->cpuNumber);
+			if (tmpOpts.cpuNumber > -1)
+				INFO("Successfully bound " PTPD_PROGNAME " to CPU core %d\n",
+				     tmpOpts.cpuNumber);
+			else
+				INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->cpuNumber);
 		}
-	 }
+	}
 #endif
 
 	if(!reloadSuccessful) {
