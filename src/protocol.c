@@ -35,6 +35,7 @@
 #include "ptpd.h"
 #include "timer.h"
 #include "timer_collection.h"
+#include "utils.h"
 
 Boolean doInit(RunTimeOpts*,PtpClock*);
 static void doState(RunTimeOpts*,PtpClock*);
@@ -230,7 +231,7 @@ protocol(RunTimeOpts *rtOpts, PtpClock *ptpClock)
 			     * until next retry, do not exit. Wait in chunks so SIGALRM can interrupt.
 			     */
 			    if(ptpClock->initFailure) {
-				    usleep(10000);
+				    g_impl.sleep_for(ms(10));
 				    ptpClock->initFailureTimeout--;
 			    }
 

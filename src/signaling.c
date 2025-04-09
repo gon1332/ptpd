@@ -18,6 +18,7 @@
  */
 
 #include "ptpd.h"
+#include "utils.h"
 
 /* how many times we send a cancel before we stop waiting for ack */
 #define GRANT_CANCEL_ACK_TIMEOUT 3
@@ -1003,7 +1004,7 @@ cancelNodeGrants(UnicastGrantTable *nodeTable, const RunTimeOpts *rtOpts, PtpClo
 	if(grantData->granted) {
 	    cancelUnicastTransmission(grantData, rtOpts, ptpClock);
 	    /* sleep 250 to 500 us so that we don't flood the node */
-	    usleep(250+round(getRand()*250));
+	    g_impl.sleep_for(us(250 + round(getRand() * 250)));
 	}
 
     }

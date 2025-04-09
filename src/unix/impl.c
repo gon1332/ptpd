@@ -10,6 +10,7 @@
 
 #include "ptpd_config.h"
 #include "impl.h"
+#include "sys.h"
 
 #ifdef HAVE_POSIX_TIMER
 #include "timer_posix.h"
@@ -19,8 +20,10 @@
 
 const struct impl g_impl = {
 #ifdef HAVE_POSIX_TIMER
-	tmr_posix_create
+	.tmr_create = tmr_posix_create,
 #else
-	tmr_itimer_create
+	.tmr_create = tmr_itimer_create,
 #endif /* HAVE_POSIX_TIMERS */
+	.sleep_for = sleep_for,
+	.set_cpu_affinity = set_cpu_affinity,
 };

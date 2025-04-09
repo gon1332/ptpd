@@ -86,10 +86,10 @@ tmr_itimer_start(struct tmr *t, double period)
 	t_i->period = period;
 
 	const double min_interval_in_seconds = 0.000250;
-	period = MAX(period, min_interval_in_seconds);
+	period = max_f(period, min_interval_in_seconds);
 
 	const unsigned interval_counts = (period * 1e6) / ITIMER_INTERVAL_IN_MICROSECONDS;
-	t_i->interval = MAX(interval_counts, 1);
+	t_i->interval = max_d(interval_counts, 1);
 	t_i->time_left = t_i->interval;
 	t_i->running = true;
 	t_i->expired = false;

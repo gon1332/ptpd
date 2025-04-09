@@ -47,7 +47,7 @@ tmr_posix_start(struct tmr *t, double period)
 
 	const double min_interval_in_seconds = 0.000250;
 
-	period = MAX(period, min_interval_in_seconds);
+	period = max_f(period, min_interval_in_seconds);
 	t_p->period = period;
 
 	struct itimerspec its = {0};

@@ -211,7 +211,7 @@
 #undef HAVE_SYSLOG_H
 
 /* Define to 1 if you have the <sys/cpuset.h> header file. */
-#undef HAVE_SYS_CPUSET_H
+#cmakedefine HAVE_SYS_CPUSET_H
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
 #undef HAVE_SYS_IOCTL_H

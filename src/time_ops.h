@@ -62,7 +62,6 @@ void ti_from_timespec(const struct timespec *from, TimeInternal *to);
  * @param[in] from Internal time representation
  * @param[out] to Time in struct timespec
  */
-// void InternalTime_to_ts(const TimeInternal *from, struct timespec *to);
 void ti_to_timespec(const TimeInternal *from, struct timespec *to);
 
 /** Converts struct timeval to TimeInternal

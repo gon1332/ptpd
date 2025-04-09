@@ -6,10 +6,10 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 
-#include <errno.h>
 #include <time.h>
 #include <unistd.h>
 #include <unity.h>
+#include "sys.h"
 #include "timer.h"
 #include "timer_itimer.h"
 #include "timer_posix.h"
@@ -22,14 +22,6 @@ setUp(void)
 void
 tearDown(void)
 {
-}
-
-static void
-sleep_for(const struct timespec *duration)
-{
-	struct timespec remaining = *duration;
-	while (nanosleep(&remaining, &remaining) == -1 && errno == EINTR) {
-	}
 }
 
 void
@@ -58,8 +50,7 @@ test_posix(void)
 	TEST_ASSERT_FALSE(tmr_expired(t));
 	TEST_ASSERT_EQUAL(interval_seconds, tmr_interval(t));
 
-	const struct timespec duration = {1, 0};
-	sleep_for(&duration);
+	sleep_for(1);
 
 	TEST_ASSERT_TRUE(tmr_running(t));
 	TEST_ASSERT_TRUE(tmr_expired(t));
@@ -100,8 +91,7 @@ test_itimer(void)
 	TEST_ASSERT_FALSE(tmr_expired(t));
 	TEST_ASSERT_EQUAL(interval_seconds, tmr_interval(t));
 
-	const struct timespec duration = {1, 0};
-	sleep_for(&duration);
+	sleep_for(1);
 
 	TEST_ASSERT_TRUE(tmr_running(t));
 	TEST_ASSERT_TRUE(tmr_expired(t));

@@ -39,6 +39,7 @@
 #include "../ptpd.h"
 
 #include "timer_collection.h"
+#include "utils.h"
 
 /*
  * valgrind 3.5.0 currently reports no errors (last check: 20110512)
@@ -177,20 +178,21 @@ applyConfig(dictionary *baseConfig, RunTimeOpts *rtOpts, PtpClock *ptpClock)
         if(rtOpts->restartSubsystems & PTPD_CHANGE_CPUAFFINITY) {
                 NOTIFY("Applying CPU binding configuration: changing selected CPU core\n");
 
-                if(setCpuAffinity(tmpOpts.cpuNumber) < 0) {
-                        if(tmpOpts.cpuNumber == -1) {
-                                ERROR("Could not unbind from CPU core %d\n", rtOpts->cpuNumber);
-                        } else {
-                                ERROR("Could bind to CPU core %d\n", tmpOpts.cpuNumber);
-                        }
+		if (g_impl.set_cpu_affinity(tmpOpts.cpuNumber) < 0) {
+			if (tmpOpts.cpuNumber == -1) {
+				ERROR("Could not unbind from CPU core %d\n", rtOpts->cpuNumber);
+			} else {
+				ERROR("Could bind to CPU core %d\n", tmpOpts.cpuNumber);
+			}
 			reloadSuccessful = FALSE;
-                } else {
-                        if(tmpOpts.cpuNumber > -1)
-                                INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", tmpOpts.cpuNumber);
-                        else
-                                INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->cpuNumber);
-                }
-         }
+		} else {
+			if (tmpOpts.cpuNumber > -1)
+				INFO("Successfully bound " PTPD_PROGNAME " to CPU core %d\n",
+				     tmpOpts.cpuNumber);
+			else
+				INFO("Successfully unbound "PTPD_PROGNAME" from cpu core CPU core %d\n", rtOpts->cpuNumber);
+		}
+	}
 #endif
 
 	if(!reloadSuccessful) {
@@ -868,7 +870,7 @@ configcheck:
 			/* Once we've been reaped by init, parent PID will be 1 */
 			if(getppid() == 1)
 				break;
-			usleep(1);
+			g_impl.sleep_for(us(1));
 		}
 	}
 
@@ -885,10 +887,11 @@ configcheck:
 #if (defined(linux) && defined(HAVE_SCHED_H)) || defined(HAVE_SYS_CPUSET_H) || defined(__QNXNTO__)
 	/* Try binding to a single CPU core if configured to do so */
 	if(rtOpts->cpuNumber > -1) {
-    		if(setCpuAffinity(rtOpts->cpuNumber) < 0) {
-		    ERROR("Could not bind to CPU core %d\n", rtOpts->cpuNumber);
+		if (g_impl.set_cpu_affinity(rtOpts->cpuNumber) < 0) {
+			ERROR("Could not bind to CPU core %d\n", rtOpts->cpuNumber);
 		} else {
-		    INFO("Successfully bound "PTPD_PROGNAME" to CPU core %d\n", rtOpts->cpuNumber);
+			INFO("Successfully bound " PTPD_PROGNAME " to CPU core %d\n",
+			     rtOpts->cpuNumber);
 		}
 	}
 #endif
