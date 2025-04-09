@@ -1,4 +1,6 @@
 set(linux_sources sys_linux.c)
+set(bsd_sources sys_bsd.c)
+set(qnx_sources sys_qnx.c)
 
 add_library(unix OBJECT
         impl.c
