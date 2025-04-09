@@ -17,6 +17,7 @@ function(generate_configuration in out)
     check_include_files(sys/types.h HAVE_SYS_TYPES_H)
     check_include_files(getopt.h HAVE_GETOPT_H)
     check_include_files(sched.h HAVE_SCHED_H)
+    check_include_files(sys/cpuset.h HAVE_SYS_CPUSET_H)
     check_include_files(linux_rtc.h HAVE_LINUX_RTC_H)
 
     include(CheckFunctionExists)

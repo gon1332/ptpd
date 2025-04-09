@@ -29,6 +29,8 @@ set_cpu_affinity(int cpu)
 		}
 	}
 	return sched_setaffinity(0, sizeof(mask), &mask);
+#else
+	#pragma message("[unimplemented] set_cpu_affinity")
 #endif /* HAVE_SCHED_H */
 
 	return -1;

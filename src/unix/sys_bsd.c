@@ -10,9 +10,11 @@
  */
 
 #include "sys.h"
+#include "ptpd_config.h"
+#ifdef HAVE_SYS_CPUSET_H
 #include <sys/param.h>
 #include <sys/cpuset.h>
-#include "ptpd_config.h"
+#endif /* HAVE_SYS_CPUSET_H */
 
 int
 set_cpu_affinity(int cpu)
@@ -29,6 +31,8 @@ set_cpu_affinity(int cpu)
 		}
 	}
 	return (cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_PID, -1, sizeof(mask), &mask));
+#else
+	#pragma message("[unimplemented] set_cpu_affinity")
 #endif /* HAVE_SYS_CPUSET_H */
 
 	return -1;
