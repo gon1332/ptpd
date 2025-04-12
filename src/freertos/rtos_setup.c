@@ -14,13 +14,15 @@
 #include <task.h>
 #include <stdlib.h>
 
-void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
+void
+vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
 	printf("Stack Overflow for task %s\n", pcTaskName);
 	exit(1);
 }
 
-void vApplicationMallocFailedHook(void)
+void
+vApplicationMallocFailedHook(void)
 {
 	printf("Malloc failed\n");
 	exit(1);

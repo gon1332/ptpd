@@ -4,6 +4,7 @@ set(qnx_sources sys_qnx.c)
 
 add_library(unix OBJECT
         impl.c
+        startup.c
         sys.c
         timer_itimer.c
         $<$<BOOL:${HAVE_POSIX_TIMER}>:timer_posix.c>

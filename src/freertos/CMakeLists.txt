@@ -18,6 +18,7 @@ FetchContent_MakeAvailable(freertos_kernel)
 add_library(freertos OBJECT
         impl.c
         rtos_setup.c
+        startup.c
         sys.c
         timer_freertos.c
 )

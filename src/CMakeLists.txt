@@ -41,7 +41,6 @@ add_subdirectory(unix)
 
 add_executable(ptpd2
         ptpd.c
-        dep/startup.c
         dep/sys.c
 )
 target_include_directories(ptpd2 PUBLIC
@@ -69,7 +68,6 @@ target_compile_features(ptpd2 PUBLIC c_std_99)
 
 add_executable(ptpd2_freertos
         ptpd.c
-        dep/startup.c
         dep/sys.c
 )
 target_include_directories(ptpd2_freertos PUBLIC

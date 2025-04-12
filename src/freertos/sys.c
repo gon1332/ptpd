@@ -40,12 +40,12 @@ get_time(enum clock_type type, TimeInternal *time)
 		time->nanoseconds = (int64_t)ticks * NSEC_IN_SEC;
 	} else {
 #ifdef HAVE_CLOCK_GETTIME
-	struct timespec ts;
-	if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-		perror("clock_gettime");
-		return;
-	}
-	ti_from_timespec(&ts, time);
+		struct timespec ts;
+		if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+			perror("clock_gettime");
+			return;
+		}
+		ti_from_timespec(&ts, time);
 #else
 #pragma warning("[unimplemented] " __func__)
 #endif /* _POSIX_TIMERS */
@@ -72,4 +72,15 @@ set_cpu_affinity(int cpu)
 	(void)cpu;
 #pragma warning("[unimplemented] " __func__)
 	return 0;
+}
+
+void
+thread_create(void(p_thread_code)(void *))
+{
+// #define
+// 	const configSTACK_DEPTH_TYPE stack_size = configMINIMAL_STACK_SIZE * 2;
+// 	static StackType_t stack[stack_size];
+// 	static StaticTask_t buffer;
+// 	TaskHandle_t task = xTaskCreateStatic(p_thread_code, "ptpd", stack_size, (void *)1,
+// 					      tskIDLE_PRIORITY, stack, &buffer);
 }

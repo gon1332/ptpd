@@ -39,4 +39,6 @@ void get_time(enum clock_type type, TimeInternal *time);
  */
 void set_time(const TimeInternal *time);
 
+// void thread_create(void);
+
 #endif /* SYS_H_ */

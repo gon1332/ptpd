@@ -124,12 +124,10 @@ tmr_freertos_create(void)
 	 * The following call will not fail because the memory has already been allocated with
 	 * pvPortCalloc()
 	 */
-	t_f->timerid = xTimerCreateStatic("timer",
-		portMAX_DELAY, /* It will change in tmr_start */
-		pdTRUE, /* Auto reloading is what we do */
-		t_f, /* To be retrieved by the callback */
-		tmr_handler,
-		&t_f->buffer);
+	t_f->timerid = xTimerCreateStatic("timer", portMAX_DELAY, /* It will change in tmr_start */
+					  pdTRUE, /* Auto reloading is what we do */
+					  t_f, /* To be retrieved by the callback */
+					  tmr_handler, &t_f->buffer);
 
 	t_f->timer.destroy = tmr_freertos_destroy;
 	t_f->timer.start = tmr_freertos_start;
