@@ -36,6 +36,8 @@ static inline double max_f(double a, double b) { return a > b ? a : b; }
  */
 static inline uint32_t max_d(uint32_t a, uint32_t b) { return a > b ? a : b; }
 
+static inline double as_ms(double v) { return v * 1e3; }
+static inline double as_ns(double v) { return v * 1e9; }
 static inline double ms(double v) { return v * 1e-3; }
 static inline double us(double v) { return v * 1e-6; }
 static inline double ns(double v) { return v * 1e-9; }

@@ -19,6 +19,17 @@ services:
     cap_add:
       - SYS_TIME
 
+  ptpd-slave-freertos:
+    build: .
+    container_name: ptpd-slave-freertos
+    entrypoint: "cmake-build-package/src/ptpd2_freertos"
+    command: [ "--p2p", "-s", "-i", "eth0", "-V" ]
+    networks:
+      ptp-network:
+        ipv4_address: 172.28.0.4
+    cap_add:
+      - SYS_TIME
+
 networks:
   ptp-network:
     driver: bridge
