@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 COPY . /project
 WORKDIR /project
 
-RUN cmake --preset package && cmake --build --preset package
+RUN cmake --preset package && cmake --build --preset package && cmake --build --preset freertos
 
 ENTRYPOINT ["cmake-build-package/src/unix/ptpd2"]
 
