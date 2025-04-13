@@ -9,6 +9,10 @@ add_library(unix OBJECT
         timer_itimer.c
         $<$<BOOL:${HAVE_POSIX_TIMER}>:timer_posix.c>
 )
+target_compile_options(unix PUBLIC
+        -Wall
+        -gdwarf-4
+)
 
 if (${ptpd_for_linux})
     target_sources(unix PRIVATE ${linux_sources})
@@ -23,5 +27,9 @@ target_include_directories(unix PRIVATE
         $<TARGET_PROPERTY:core,INCLUDE_DIRECTORIES>
 )
 target_link_libraries(unix PRIVATE core)
+
+add_executable(ptpd2)
+target_link_libraries(ptpd2 PUBLIC core unix)
+target_compile_features(ptpd2 PUBLIC c_std_99)
 
 ptpd_add_subdirectory_if(TESTING unit_tests)

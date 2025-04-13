@@ -28,7 +28,13 @@ target_include_directories(freertos PRIVATE
         $<TARGET_PROPERTY:core,INCLUDE_DIRECTORIES>
 )
 target_link_libraries(freertos PRIVATE core freertos_config freertos_kernel)
+target_compile_options(freertos PUBLIC
+        -Wall
+        -gdwarf-4
+)
 
-if (${TESTING})
-    add_subdirectory(unit_tests)
-endif ()
+add_executable(ptpd2_freertos)
+target_link_libraries(ptpd2_freertos PUBLIC core unix)
+target_compile_features(ptpd2_freertos PUBLIC c_std_99)
+
+#ptpd_add_subdirectory_if(TESTING unit_tests)

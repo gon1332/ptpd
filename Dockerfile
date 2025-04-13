@@ -14,5 +14,5 @@ WORKDIR /project
 
 RUN cmake --preset package && cmake --build --preset package
 
-ENTRYPOINT ["cmake-build-package/src/ptpd2"]
+ENTRYPOINT ["cmake-build-package/src/unix/ptpd2"]
 

@@ -32,7 +32,7 @@ services:
   ptpd-slave-freertos:
     build: .
     container_name: ptpd-slave-freertos
-    entrypoint: "cmake-build-package/src/ptpd2_freertos"
+    entrypoint: "cmake-build-package/src/freertos/ptpd2_freertos"
     command: [ "--p2p", "-s", "-i", "eth0", "-V" ]
     networks:
       - ptp-network-2
