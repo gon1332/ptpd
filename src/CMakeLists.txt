@@ -52,6 +52,13 @@ target_link_libraries(core PRIVATE
         "$<$<BOOL:${SNMP}>:netsnmp;netsnmpagent;netsnmpmibs>"
 )
 
+message(${ptpd_for_linux})
+message(${ptpd_for_openbsd})
+message(${ptpd_for_freebsd})
+message(${ptpd_for_netbsd})
+message(${ptpd_for_macos})
+message(${ptpd_for_qnx})
+
 add_subdirectory(unix)
 ptpd_add_subdirectory_if(ptpd_for_linux freertos) # FreeRTOS POSIX flavor is based on Linux
 
