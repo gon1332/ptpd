@@ -33,7 +33,7 @@ target_compile_options(freertos PUBLIC
         -gdwarf-4
 )
 
-add_executable(ptpd2_freertos)
+add_executable(ptpd2_freertos ptpd.c)
 target_link_libraries(ptpd2_freertos PUBLIC core unix)
 target_compile_features(ptpd2_freertos PUBLIC c_std_99)
 

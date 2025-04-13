@@ -23,7 +23,6 @@ add_library(core OBJECT
         >
         management.c
         protocol.c
-        ptpd.c
         signaling.c
         time_ops.c
         timer.c

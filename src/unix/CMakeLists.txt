@@ -28,7 +28,7 @@ target_include_directories(unix PRIVATE
 )
 target_link_libraries(unix PRIVATE core)
 
-add_executable(ptpd2)
+add_executable(ptpd2 ptpd.c)
 target_link_libraries(ptpd2 PUBLIC core unix)
 target_compile_features(ptpd2 PUBLIC c_std_99)
 

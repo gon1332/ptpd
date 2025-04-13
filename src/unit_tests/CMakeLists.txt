@@ -2,10 +2,10 @@
 
 add_executable(test_time_ops test_time_ops.c)
 target_include_directories(test_time_ops PRIVATE $<TARGET_PROPERTY:core,INCLUDE_DIRECTORIES>)
-target_link_libraries(test_time_ops unity core)
+target_link_libraries(test_time_ops unity core unix)
 add_test(time_ops_suite test_time_ops)
 
 add_executable(test_list test_list.c)
 target_include_directories(test_list PRIVATE $<TARGET_PROPERTY:core,INCLUDE_DIRECTORIES>)
-target_link_libraries(test_list unity core)
+target_link_libraries(test_list unity core unix)
 add_test(list_suite test_list)
