@@ -49,7 +49,7 @@ target_link_libraries(core PRIVATE
         "$<$<BOOL:${SNMP}>:netsnmp;netsnmpagent;netsnmpmibs>"
 )
 
-add_subdirectory(freertos)
+ptpd_add_subdirectory_if(ptpd_for_linux freertos)
 add_subdirectory(unix)
 
 add_executable(ptpd2
@@ -100,6 +100,4 @@ target_compile_definitions(ptpd2_freertos PUBLIC
 
 target_compile_features(ptpd2_freertos PUBLIC c_std_99)
 
-if (${TESTING})
-    add_subdirectory(unit_tests)
-endif ()
+ptpd_add_subdirectory_if(TESTING unit_tests)
