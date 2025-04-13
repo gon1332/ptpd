@@ -23,5 +23,12 @@ add_library(freertos OBJECT
         timer_freertos.c
 )
 
-target_include_directories(freertos PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(freertos PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        $<TARGET_PROPERTY:core,INCLUDE_DIRECTORIES>
+)
 target_link_libraries(freertos PRIVATE core freertos_config freertos_kernel)
+
+if (${TESTING})
+    add_subdirectory(unit_tests)
+endif ()

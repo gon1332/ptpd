@@ -24,7 +24,10 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL QNX)
     target_sources(unix PRIVATE ${qnx_sources})
 endif ()
 
-target_include_directories(unix PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(unix PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        $<TARGET_PROPERTY:core,INCLUDE_DIRECTORIES>
+)
 target_link_libraries(unix PRIVATE core)
 
 if (${TESTING})

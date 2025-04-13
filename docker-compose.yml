@@ -4,8 +4,19 @@ services:
     container_name: ptpd-master
     command: [ "--p2p", "-M", "-i", "eth0", "-V" ]
     networks:
-      ptp-network:
-        ipv4_address: 172.28.0.2
+      - ptp-network-0
+    cap_add:
+      - SYS_TIME
+
+  ptp4l-boundary:
+    build: .
+    container_name: ptp4l-boundary
+    entrypoint: "ptp4l"
+    command: [ "-P", "-S", "-i", "eth0", "-i", "eth1", "-i", "eth2", "-m", "-q" ]
+    networks:
+      - ptp-network-0
+      - ptp-network-1
+      - ptp-network-2
     cap_add:
       - SYS_TIME
 
@@ -14,8 +25,7 @@ services:
     container_name: ptpd-slave
     command: [ "--p2p", "-s", "-i", "eth0", "-V" ]
     networks:
-      ptp-network:
-        ipv4_address: 172.28.0.3
+      - ptp-network-1
     cap_add:
       - SYS_TIME
 
@@ -25,15 +35,14 @@ services:
     entrypoint: "cmake-build-package/src/ptpd2_freertos"
     command: [ "--p2p", "-s", "-i", "eth0", "-V" ]
     networks:
-      ptp-network:
-        ipv4_address: 172.28.0.4
+      - ptp-network-2
     cap_add:
       - SYS_TIME
 
 networks:
-  ptp-network:
+  ptp-network-0:
     driver: bridge
-    ipam:
-      config:
-        - subnet: 172.28.0.0/16
-
+  ptp-network-1:
+    driver: bridge
+  ptp-network-2:
+    driver: bridge

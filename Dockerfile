@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     cmake \
     git \
     ninja-build \
+    linuxptp \
     libsnmp-dev \
     && rm -rf /var/lib/apt/lists/*
 

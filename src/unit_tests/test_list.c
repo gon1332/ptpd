@@ -37,14 +37,14 @@ test_list(void)
 {
 	/* [H] */
 	/* [H] <=> [1] */
-	struct item item1 = {1, NULL};
+	struct item item1 = {1, {NULL}};
 	list_add(&head, &item1.list);
 	TEST_ASSERT_FALSE(list_is_empty(&head));
 	TEST_ASSERT_EQUAL_PTR(&item1.list, head.next);
 	TEST_ASSERT_EQUAL_PTR(&item1.list, head.prev);
 
 	/* [H] <=> [2] <=> [1] */
-	struct item item2 = {2, NULL};
+	struct item item2 = {2, {NULL}};
 	list_add(&head, &item2.list);
 	TEST_ASSERT_FALSE(list_is_empty(&head));
 	TEST_ASSERT_EQUAL_PTR(&item2.list, head.next);
@@ -53,7 +53,7 @@ test_list(void)
 	TEST_ASSERT_EQUAL_PTR(&head, item2.list.prev);
 
 	/* [H] <=> [3] <=> [2] <=> [1] */
-	struct item item3 = {3, NULL};
+	struct item item3 = {3, {NULL}};
 	list_add(&head, &item3.list);
 	TEST_ASSERT_FALSE(list_is_empty(&head));
 	TEST_ASSERT_EQUAL_PTR(&item3.list, head.next);

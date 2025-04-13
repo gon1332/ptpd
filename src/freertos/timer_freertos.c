@@ -69,7 +69,7 @@ tmr_freertos_stop(struct tmr *t)
 	struct tmr_freertos *t_f = CONTAINER_OF(t, struct tmr_freertos, timer);
 
 	xTimerStop(t_f->timerid, 0);
-	while (xTimerIsTimerActive(t_f->timerid) == pdFALSE) {
+	while (xTimerIsTimerActive(t_f->timerid) == pdTRUE) {
 		vTaskDelay(1);
 	}
 }
