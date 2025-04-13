@@ -13,7 +13,7 @@
 #define IMPL_H_
 
 #include "ptp_datatypes.h"
-#include "unix/sys.h"
+#include "sys.h"
 
 struct impl
 {

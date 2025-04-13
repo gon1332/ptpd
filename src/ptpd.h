@@ -354,6 +354,8 @@ DECLARE_UNPACK( Octet )
 DECLARE_UNPACK( UInteger48 )
 DECLARE_UNPACK( Integer64 )
 
+void ptpd_start(int argc, char **argv);
+
 /* display.c */
 void displayRunTimeOpts(const RunTimeOpts*);
 void displayDefault (const PtpClock*);

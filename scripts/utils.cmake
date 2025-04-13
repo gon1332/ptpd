@@ -1,5 +1,25 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
+set(ptpd_for_linux OFF)
+set(ptpd_for_openbsd OFF)
+set(ptpd_for_freebsd OFF)
+set(ptpd_for_netbsd OFF)
+set(ptpd_for_macos OFF)
+set(ptpd_for_qnx OFF)
+if (${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+    set(ptpd_for_linux ON)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL OpenBSD)
+    set(ptpd_for_openbsd ON)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL FreeBSD)
+    set(ptpd_for_freebsd ON)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL NetBSD)
+    set(ptpd_for_netbsd ON)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
+    set(ptpd_for_macos ON)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL QNX)
+    set(ptpd_for_qnx ON)
+endif ()
+
 #
 # Generates the configuration file at the `out` path, given the template in the `in` path
 # Eg. generate_configuration(${PATH_TO}/config.h.in ${PATH_TO}/config.h)
@@ -45,4 +65,10 @@ function(generate_configuration in out)
         check_struct_has_member("struct ether_addr" octet netinet/if_ether.h HAVE_STRUCT_ETHER_ADDR_OCTET)
     endif ()
     configure_file(${in} ${out})
+endfunction()
+
+function(ptpd_add_subdirectory_if toggle dir)
+    if (${${toggle}})
+        add_subdirectory(${dir})
+    endif ()
 endfunction()

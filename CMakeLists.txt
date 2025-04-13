@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.22)
 project(ptpd LANGUAGES C ASM)
 
 option(SNMP "Enable SNMP" OFF)
@@ -15,7 +15,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 if (${TESTING})
     include(CTest)
-    add_subdirectory(external/Unity)
 endif ()
+ptpd_add_subdirectory_if(TESTING external/Unity)
 
 add_subdirectory(src)

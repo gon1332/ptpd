@@ -62,6 +62,21 @@
   ps -ef | grep ptpd2
 */
 
+RunTimeOpts rtOpts;			/* statically allocated run-time
+					 * configuration data */
+Boolean startupInProgress;
+
+/*
+ * Global variable with the main PTP port. This is used to show the current state in DBG()/message()
+ * without having to pass the pointer everytime.
+ *
+ * if ptpd is extended to handle multiple ports (eg, to instantiate a Boundary Clock),
+ * then DBG()/message() needs a per-port pointer argument
+ */
+PtpClock *G_ptpClock = NULL;
+
+TimingDomain timingDomain;
+
 /*
  * Synchronous signal processing:
  * original idea: http://www.openbsd.org/cgi-bin/cvsweb/src/usr.sbin/ntpd/ntpd.c?rev=1.68;content-type=text%2Fplain
@@ -1003,6 +1018,67 @@ ntpSetup (RunTimeOpts *rtOpts, PtpClock *ptpClock)
 	}
 }
 
+/**
+ * @param cfg
+ * @return true if PTPd task has been created
+ */
+void
+ptpd_start(int argc, char **argv)
+{
+	PtpClock *ptpClock;
+	Integer16 ret;
+	TimingService *ts;
 
+	startupInProgress = TRUE;
 
+	memset(&timingDomain, 0, sizeof(timingDomain));
+	timingDomainSetup(&timingDomain);
+
+	timingDomain.electionLeft = 10;
+
+	/* Initialize run time options with command line arguments */
+	if (!(ptpClock = ptpdStartup(argc, argv, &ret, &rtOpts))) {
+		if (ret != 0 && !rtOpts.checkConfigOnly)
+			ERROR(USER_DESCRIPTION" startup failed\n");
+		return;
+	}
+
+	timingDomain.electionDelay = rtOpts.electionDelay;
+
+	/* configure PTP TimeService */
+
+	timingDomain.services[0] = &ptpClock->timingService;
+	ts = timingDomain.services[0];
+	strncpy(ts->id, "PTP0", TIMINGSERVICE_MAX_DESC);
+	ts->dataSet.priority1 = rtOpts.preferNTP;
+	ts->dataSet.type = TIMINGSERVICE_PTP;
+	ts->config = &rtOpts;
+	ts->controller = ptpClock;
+	ts->timeout = rtOpts.idleTimeout;
+	ts->updateInterval = 1;
+	ts->holdTime = rtOpts.ntpOptions.failoverTimeout;
+	timingDomain.serviceCount = 1;
+
+	if (rtOpts.ntpOptions.enableEngine) {
+		ntpSetup(&rtOpts, ptpClock);
+	} else {
+	    timingDomain.serviceCount = 1;
+	    timingDomain.services[1] = NULL;
+	}
+
+	timingDomain.init(&timingDomain);
+	timingDomain.updateInterval = 1;
+
+	startupInProgress = FALSE;
+
+	/* global variable for message(), please see comment on top of this file */
+	G_ptpClock = ptpClock;
+
+	/* do the protocol engine */
+	protocol(&rtOpts, ptpClock);
+	/* forever loop.. */
+
+	/* this also calls ptpd shutdown */
+	timingDomain.shutdown(&timingDomain);
+}
 

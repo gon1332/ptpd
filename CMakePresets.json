@@ -46,6 +46,11 @@
       "name": "package",
       "configurePreset": "package",
       "targets": ["ptpd2"]
+    },
+    {
+      "name": "freertos",
+      "configurePreset": "package",
+      "targets": ["ptpd2_freertos"]
     }
   ],
   "testPresets": [
