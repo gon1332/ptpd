@@ -17,6 +17,7 @@ jobs:
         run: |
           cmake --preset package
           cmake --build --preset package
+          cmake --build --preset freertos
 
   openbsd:
     runs-on: ubuntu-latest
